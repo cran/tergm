@@ -92,10 +92,18 @@ simulate.stergm<-function(object, nsim=1, seed=NULL,
                           verbose=FALSE, ...){
   check.control.class(c("simulate.stergm","simulate.network"))
   
-  control.transfer <- c("MCMC.burnin", "MCMC.burnin.mul", "MCMC.prop.weights", "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges", "MCMC.init.maxchanges")
-  for(arg in control.transfer)
-    if(is.null(control[[arg]]))
-      control[arg] <- list(object$control[[arg]])
+  control.transfer <- list(MCMC.prop.weights="MCMC.prop.weights",
+                           MCMC.prop.args="MCMC.prop.args",
+                           MCMC.packagenames="MCMC.packagenames",
+                           MCMC.init.maxedges="MCMC.init.maxedges",
+                           MCMC.init.maxchanges="MCMC.init.maxchanges",
+                           EGMME.MCMC.burnin.min="MCMC.burnin.min",
+                           EGMME.MCMC.burnin.max="MCMC.burnin.max",
+                           EGMME.MCMC.burnin.pval="MCMC.burnin.pval",
+                           EGMME.MCMC.burnin.add="MCMC.burnin.add")
+  for(arg in names(control.transfer))
+    if(is.null(control[[control.transfer[[arg]]]]))
+      control[control.transfer[[arg]]] <- list(object$control[[arg]])
 
   control <- set.control.class("control.simulate.network")
 
@@ -146,7 +154,7 @@ simulate.network <- function(object, nsim=1, seed=NULL,
   # output is a "main call" parameter, since it affects what to
   # compute rather than just how to compute it, but it's convenient to
   # have it as a part of the control data structure.
-  if((time.burnin!=0 || time.interval!=1) && output!="stats"){
+  if((time.burnin!=0 || time.interval!=1) && output!="stats" && output!="final"){
     stop("Generating a networkDynamic or change list output is incompatible with a time.burnin!=1 or a time.interval!=1. Only network statistics can be returned with these settings.")
   }
   
@@ -190,8 +198,6 @@ simulate.network <- function(object, nsim=1, seed=NULL,
 
   model.mon <- if(!is.null(monitor)) ergm.getmodel(monitor, nw, role="target") else NULL
   
-  verbose <- match(verbose,
-                c("FALSE","TRUE", "very"), nomatch=1)-1
   if(missing(coef.form)) {
     coef.form <- rep(0,length(model.form$coef.names))
     warning("No parameter values given, using Bernouli formation.\nThis means that every time step, half the non-tie dyads will gain a tie!")
@@ -218,16 +224,8 @@ simulate.network <- function(object, nsim=1, seed=NULL,
   
   out <- replicate(nsim, {
     if(is.null(nw %n% "lasttoggle")) nw %n% "lasttoggle" <- rep(round(-.Machine$integer.max/2), network.dyadcount(nw))
-    nwtime <- nw %n% "time"
-
-    nw %n% "time" <- if(is.null(nwtime)) NVL(time.start,0) else{
-      if(!is.null(time.start)){
-        if(time.start!=nwtime) warning("Argument time.start specified for a network that already has a time stamp. Overriding the time stamp.")
-        time.start
-      }else nwtime
-    }
-    
-    
+    nw <- .set.default.net.obs.period(nw, time.start)
+    nw %n% "time" <- start <- .get.last.obs.time(nw, time.start)
     z <- stergm.getMCMCsample(nw, model.form, model.diss, model.mon,
                               MHproposal.form, MHproposal.diss,
                               eta.form, eta.diss, control, verbose)
@@ -239,7 +237,6 @@ simulate.network <- function(object, nsim=1, seed=NULL,
     out <-
       switch(output,
              networkDynamic = {
-               library(networkDynamic)
                nwd <- to.networkDynamic.lasttoggle(nw)
                nwd <- networkDynamic.apply.changes(nwd,z$changed)
                attributes(nwd) <- c(attributes(nwd), # Don't clobber existing attributes!
@@ -252,9 +249,8 @@ simulate.network <- function(object, nsim=1, seed=NULL,
                                          coef.form=coef.form,
                                          coef.diss=coef.diss,
                                          constraints=constraints,
-                                         start = nw%n%"time" + 0,
-                                         end = nw%n%"time" + time.slices,
                                          changes = z$changed))
+               nwd <- .add.net.obs.period.spell(nwd, start, time.slices)
                nwd
              },
              changes = {
@@ -356,26 +352,23 @@ simulate.networkDynamic <- function(object, nsim=1, seed=NULL,
     output <- if(statsonly) "stats" else "networkDynamic"
   }
 
-  nwend <- attr(object,"end")
-  start <- if(is.null(nwend)) NVL(time.start,0) else{
-    if(!is.null(time.start)){
-      if(time.start!=nwend) warning("Argument time.start specified for a network that already has a time stamp. Overriding the time stamp.")
-      time.start
-    }else nwend
-  }
+  # Resolve the starting time by setting the initial (implicit) net.obs.period.
+  object <- .set.default.net.obs.period(object, time.start)
+  start <- .get.last.obs.time(object, time.start)
 
+  if(verbose) cat("extracting state of networkDynamic at time ",start,"\n")
   nw <- network.extract.with.lasttoggle(object, start)
+ 
   vActiveIDs <- nw %v% ".networkDynamicID"
   delete.vertex.attribute(nw, ".networkDynamicID")
  
   output <- match.arg(output)
-  
   sim <- simulate.network(nw, nsim=1, seed=NULL,
                           formation=formation, dissolution=dissolution,
                           coef.form=coef.form,coef.diss=coef.diss,
                           constraints = constraints,
                           monitor = monitor,
-                          time.slices=time.slices, time.burnin=time.burnin, time.interval=time.interval,
+                          time.slices=time.slices, time.start=time.start, time.burnin=time.burnin, time.interval=time.interval,
                           control=control,          
                           output=switch(output, networkDynamic = "changes", output),
                           stats.form = stats.form,
@@ -385,14 +378,21 @@ simulate.networkDynamic <- function(object, nsim=1, seed=NULL,
   ## If all the user wants is statistics or a list of toggles, we are done.
   if(output!="networkDynamic") return(sim)
 
-  if(verbose) cat("Updating networkDynamic.\n")
+  if(verbose) cat("Updating networkDynamic ")
   
   ## Map the vertex IDs:
   sim[,"tail"] <- vActiveIDs[sim[,"tail"]]
   sim[,"head"] <- vActiveIDs[sim[,"head"]]
 
   object  <- networkDynamic.apply.changes(object, sim)
-
+  # set up net.obs.period list to describe time period simulated
+  object <- .add.net.obs.period.spell(object, start, time.slices)
+  
+  if(verbose){
+    obs<-(object%n%'net.obs.period')$observations
+    cat("with simulated time: (",obs[[length(obs)]],").\n")
+  }
+  
   attributes(object) <- c(attributes(object), # Don't clobber existing attributes!
                           list(formation = ergm.update.formula(formation,nw~., from.new="nw"),
                                dissolution = ergm.update.formula(dissolution,nw~., from.new="nw"),
@@ -403,9 +403,60 @@ simulate.networkDynamic <- function(object, nsim=1, seed=NULL,
                                coef.form=coef.form,
                                coef.diss=coef.diss,
                                constraints=constraints,
-                               start = attr(object,"start") + 0,
-                               end = start + time.slices,
                                changes = rbind(attr(object,"changes"),matrix(c(sim), nrow=nrow(sim),ncol=ncol(sim),dimnames=list(rownames(sim),colnames(sim))))
                                ))
   object
+}
+
+.set.default.net.obs.period <- function(nw, time.start=NULL){
+  # get net.obs.period from nw, if it exists
+  if (!is.null(nw%n%'net.obs.period')) return(nw)
+  
+  nwtime <- nw %n% "time"
+  delete.network.attribute(nw,"time")
+  
+  nwtime <- if(is.null(nwtime)) NVL(time.start,0) else{
+    if(!is.null(time.start)){
+      if(time.start!=nwtime) warning("Argument time.start specified for a network that already has a time stamp. Overriding the time stamp.")
+      time.start
+    }else nwtime
+  }
+
+  set.network.attribute(nw, 'net.obs.period', list(observations=list(c(nwtime,nwtime+1)),mode="discrete",time.increment=1,time.unit="step"))
+}
+
+.get.last.obs.time <- function(nw, time.user=NULL){
+  # get net.obs.period from nw
+  net.obs.period<-nw%n%'net.obs.period'
+  spells <- do.call(rbind,net.obs.period$observations)
+  last.spell <- spells[which.max(apply(spells,1,mean)),]
+  nwend <-
+    if(last.spell[1]==last.spell[2] || net.obs.period$mode=="continuous") last.spell[2]
+  # If in discrete mode and the last spell is not a point spell, then
+  # find the latest time point that is an integer number of
+  # time.icrements away from the onset, while still being strictly
+  # less than terminus. For example, with time.interval=1, c(0,2) -> 1, c(0, 1.5) -> 1.
+    else last.spell[1]+ceiling((last.spell[2]-last.spell[1])/net.obs.period$time.increment-1)*net.obs.period$time.increment
+
+  
+  if(!is.null(time.user)){
+    if(time.user<nwend & nwend!=Inf) stop("Attempting to resume from a time point prior to the end of the previous simulation is not supported at this time.", call.=FALSE)
+    if(time.user>nwend) warning("Argument time.start specified for a network that already has a time stamp. Overriding the time stamp.", call.=FALSE)
+    time.user
+  }else nwend
+}
+
+.get.first.obs.time <- function(nw){
+  # get net.obs.period from nw
+  net.obs.period<-nw%n%'net.obs.period'
+  spells <- do.call(rbind,net.obs.period$observations)
+  first.spell <- spells[which.min(apply(spells,1,mean)),]
+  nwstart <- first.spell[1]
+}
+
+# add another observation spell to the end; note that the first *simulated* network is at start+1
+.add.net.obs.period.spell <- function(nw, time.start, time.steps){
+  nop <- nw%n%'net.obs.period'
+  nop$observations<-c(nop$observations,list(c(time.start+1,time.start+time.steps+1)))
+  set.network.attribute(nw, 'net.obs.period', nop)
 }

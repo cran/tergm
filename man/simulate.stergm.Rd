@@ -21,47 +21,47 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
 }
 \usage{
 \method{simulate}{stergm}(object, nsim=1, seed=NULL,
-                          coef.form = object$formation.fit$coef,
-                          coef.diss = object$dissolution.fit$coef,
-                          constraints = object$constraints,
-                          monitor = object$targets,
-                          time.slices=1, time.start=NULL, time.burnin=0, time.interval=1,
-                          control=control.simulate.stergm(),
-                          statsonly=NULL,
-                          output=c("networkDynamic", "stats", "changes", "final"),
-                          nw.start = NULL,
-                          stats.form = FALSE,
-                          stats.diss = FALSE,
-                          verbose=FALSE, 
-                          \dots)
+  coef.form = object$formation.fit$coef,
+  coef.diss = object$dissolution.fit$coef,
+  constraints = object$constraints,
+  monitor = object$targets,
+  time.slices=1, time.start=NULL, time.burnin=0, time.interval=1,
+  control=control.simulate.stergm(),
+  statsonly=NULL,
+  output=c("networkDynamic", "stats", "changes", "final"),
+  nw.start = NULL,
+  stats.form = FALSE,
+  stats.diss = FALSE,
+  verbose=FALSE, 
+  \dots)
 \method{simulate}{network}(object, nsim=1, seed=NULL,
-                           formation, dissolution,
-                           coef.form, coef.diss,
-                           constraints = ~.,
-                           monitor = NULL,
-                           time.slices=1, time.start=NULL, time.burnin=0, time.interval=1,
-                           control=control.simulate.network(),
-                           statsonly=NULL,
-                           output=c("networkDynamic", "stats", "changes", "final"),
-                           stats.form = FALSE,
-                           stats.diss = FALSE,
-                           verbose=FALSE,
-                           \dots)
+  formation, dissolution,
+  coef.form, coef.diss,
+  constraints = ~.,
+  monitor = NULL,
+  time.slices=1, time.start=NULL, time.burnin=0, time.interval=1,
+  control=control.simulate.network(),
+  statsonly=NULL,
+  output=c("networkDynamic", "stats", "changes", "final"),
+  stats.form = FALSE,
+  stats.diss = FALSE,
+  verbose=FALSE,
+  \dots)
 \method{simulate}{networkDynamic}(object, nsim=1, seed=NULL,
-                                  formation = attr(object, "formation"),
-                                  dissolution = attr(object, "dissolution"),
-                                  coef.form = attr(object, "coef.form"),
-                                  coef.diss = attr(object, "coef.diss"),
-                                  constraints = NVL(attr(object, "constraints"), ~.),
-                                  monitor = attr(object, "monitor"),
-                                  time.slices=1, time.start=NULL, time.burnin=0, time.interval=1,
-                                  control=control.simulate.network(),
-                                  statsonly=NULL,
-                                  output=c("networkDynamic", "stats", "changes"),
-                                  stats.form = FALSE,
-                                  stats.diss = FALSE,
-                                  verbose=FALSE,
-                                  \dots)
+   formation = attr(object, "formation"),
+   dissolution = attr(object, "dissolution"),
+   coef.form = attr(object, "coef.form"),
+   coef.diss = attr(object, "coef.diss"),
+   constraints = NVL(attr(object, "constraints"), ~.),
+   monitor = attr(object, "monitor"),
+   time.slices=1, time.start=NULL, time.burnin=0, time.interval=1,
+   control=control.simulate.network(),
+   statsonly=NULL,
+   output=c("networkDynamic", "stats", "changes"),
+   stats.form = FALSE,
+   stats.diss = FALSE,
+   verbose=FALSE,
+   \dots)
 }
 \arguments{
   \item{object}{an \R object of type \code{\link{stergm}} giving a model
@@ -202,7 +202,7 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
       of a \code{"time"} network attribute (for the
       \code{\link{network}} method --- see the
       \code{\link{lasttoggle}} "API") or
-      in the form of an \code{"end"} object attribute (for the
+      in the form of an \code{\link{net.obs.period}} network attribute (for the
       \code{\link{networkDynamic}} method), this attribute will be used. (If
       specified, \code{time.start} will override it with a warning.)
     }
@@ -231,17 +231,18 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
     of the simulation having terminus \code{+Inf}. The method for
     \code{\link[networkDynamic]{networkDynamic}} returns the initial
     \code{\link[networkDynamic]{networkDynamic}} with simulated changes
-    applied to it.
+    applied to it. The \code{\link{net.obs.period}} network attribute is
+    updated (or added if not existing) to reflect the time period that was
+    simulated.
 
     Additionally, attributes (\code{\link{attr}}, not network
     attributes) are attached as follows:
     \describe{
-      \item{formation, dissolution, monitor:}{Formation, dissolution,
+      \item{\code{formation}, \code{dissolution}, \code{monitor}:}{Formation, dissolution,
 	and monitoring formulas	used in the simulation,	respectively.}
-      \item{stats, stats.form, stats.diss:}{Network statistics as above.}
-      \item{coef.form, coef.diss:}{Coefficients used in the simulation.}
-      \item{start, end:}{Start and end times of the simulation.}
-      \item{changes}{A four-column matrix summarizing the changes in the
+      \item{\code{stats}, \code{stats.form}, \code{stats.diss}:}{Network statistics as above.}
+      \item{\code{coef.form}, \code{coef.diss}:}{Coefficients used in the simulation.}
+      \item{\code{changes}:}{A four-column matrix summarizing the changes in the
 	\code{"changes"} output. (This may be removed in the future.)}
     }
 
@@ -250,14 +251,17 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
   }
   
   \item{"changes"}{An integer matrix with four columns (\code{time},
-      \code{tail}, \code{head}, and \code{dir}), giving the timestampled
-      changes relative to the initial network. \code{dir} is \code{+1}
-      if a tie was formed and \code{-1} if a tie was dissolved. The
+      \code{tail}, \code{head}, and \code{to}), giving the timestampled
+      changes relative to the current network. \code{to} is \code{1} if
+      a tie was formed and \code{0} if a tie was dissolved. The
       convention for \code{time} is that it gives the time point during
       which the change is effective. For example, a row
-      \code{c(1,2,3,+1)} indicates that between time \eqn{0} and
-      \eqn{1}, a tie from node \eqn{2} to node \eqn{3} was formed, so
-      that it is present at time point \eqn{1}.
+      \code{c(5,2,3,1)} indicates that between time \eqn{4} and \eqn{5},
+      a tie from node \eqn{2} to node \eqn{3} was formed, so that it was
+      absent at time ponit \eqn{4} and present at time point \eqn{5};
+      while a row \code{c(5,2,3,0)} indicates that in that time, that
+      tie was dissolved, so that it is was present at time point \eqn{4}
+      and absent at time point \eqn{5}.
 
       Additionally, same attributes (\code{\link{attr}}, not network
       attributes) as with \code{output=="networkDynamic"} are attached.
@@ -278,7 +282,6 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
 	and monitoring formulas	used in the simulation,	respectively.}
       \item{stats, stats.form, stats.diss:}{Network statistics as above.}
       \item{coef.form, coef.diss:}{Coefficients used in the simulation.}
-      \item{start, end:}{Start and end times of the simulation.}
       \item{changes}{A four-column matrix summarizing the changes in the
 	\code{"changes"} output. (This may be removed in the future.)}
     }
@@ -315,7 +318,9 @@ print(coef.form)
 print(coef.diss)
 
 # Simulate a networkDynamic
-dynsim<-simulate(g1,formation=~edges,dissolution=~edges,coef.form=coef.form,coef.diss=coef.diss,time.slices=S,verbose=TRUE)
+dynsim<-simulate(g1,formation=~edges,dissolution=~edges,
+                 coef.form=coef.form,coef.diss=coef.diss,
+                 time.slices=S,verbose=TRUE)
 
 # "Resume" the simulation.
 dynsim2<-simulate(dynsim,time.slices=S,verbose=TRUE)
