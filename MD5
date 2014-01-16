@@ -1,6 +1,6 @@
-862292c8c7bc99fde7f5701839d1585d *DESCRIPTION
-5c699571a311627003f76ea8790a4e3e *LICENSE
-254babadfff670d1267253bb188767ee *NAMESPACE
+347922a414002773ebc7b3adaf485107 *DESCRIPTION
+17c8c54367d63f39f796aa35040f1a88 *LICENSE
+d3a4a31b1cace559551351ba3736e0c8 *NAMESPACE
 3ccff49bffd7e55fd4d7b908c6fa8124 *R/InitConstraint.R
 1e2f8ab69f2eaeb0800efdc477be038d *R/InitErgmTerm.duration.R
 96bc59daafc92c4d67df7c7becba1931 *R/InitMHP.DynMLE.R
@@ -17,7 +17,7 @@ bfef5c6389027bc4b3c015bc39c18faa *R/impute.network.list.R
 071c94b84d952c18375538631d17db8a *R/logLik.stergm.R
 d6250c0292bca3f54f3634fe535abc9f *R/mcmc.diagnostics.stergm.R
 20d4ee52ffb9d3caebc7214d7ed293d2 *R/print.stergm.R
-3945c6746170996c02c65cc2ffb3052b *R/simulate.stergm.R
+8e2de3add16ab9d5f1a5fe9a74f34f28 *R/simulate.stergm.R
 e37a6713107882b5435af70dd60df3ac *R/stergm.CMLE.R
 2ede0204504b40b4931452618b626522 *R/stergm.EGMME.GD.R
 f5d4230f8d71ecb51e1cc59360abccf5 *R/stergm.EGMME.R
@@ -25,12 +25,12 @@ f5d4230f8d71ecb51e1cc59360abccf5 *R/stergm.EGMME.R
 876e566ad4a41b02a1ec09d16b4beeb4 *R/stergm.EGMME.initialfit.R
 82ddc884fc97f1fc91893632590ac101 *R/stergm.R
 d9c87671c34dd7fcd68c837987ed4260 *R/stergm.getMCMCsample.R
-ec7e380392eb5e0d0e6fa72739905054 *R/stergm.utils.R
+d5a3561d25c2355a15e2e16be33af439 *R/stergm.utils.R
 ac39dd926501f999c492187680cc72ed *R/summary.statistics.networkDynamic.R
 dfeb5fc9a02e8413ad0c7784265ed158 *R/summary.stergm.R
 edc682064264e2174fbc6836c71d3673 *R/zzz.R
 96d67799d02ad0bd330bc64846cd151d *inst/CITATION
-3421cd850e99deb1cc51c8d3355ec1d2 *inst/NEWS.Rd
+21caa57a4e16ce484927981b96ea8539 *inst/NEWS.Rd
 3f2821c8e57ef5735a168a4883b99442 *man/coef.stergm.Rd
 9c6ddb878ba9c6fbadac7f3c5dd46086 *man/control.simulate.stergm.Rd
 ea7c0d67a3963d4aadfa8388aa68fd29 *man/control.stergm.Rd
@@ -41,7 +41,7 @@ f2b7eeb2dafbd711702f4e7ff44f4cd4 *man/impute.network.list.Rd
 a18bed1ceea4a8f475e6d12f3b8dfd21 *man/logLik.stergm.Rd
 f6ac53afa16f86bdd014bc6f657dd9bf *man/mcmc.diagnostics.stergm.Rd
 01841915da8b11b70ad78ae6731f9845 *man/print.stergm.Rd
-f442e26b306c06c80a38e0710dab2dd6 *man/simulate.stergm.Rd
+3ef6a9f7b6005062c641af00b13e8299 *man/simulate.stergm.Rd
 463d9e77142b095e15a0590e2b1e9891 *man/stergm.Rd
 07bcdc2c7a56abc99c8c764ab983b4fc *man/summary.statistics.networkDynamic.Rd
 c4cbcd53b6f39f1e116d4f8ff5b11c10 *man/tergm-internal.Rd
@@ -51,11 +51,11 @@ a6af2a22589fcb93037a3b309dc7d5e7 *src/DynSA.c
 572af2179cc5f056f0ae71f53e2fa3a7 *src/DynSA.h
 758a6bd9608a0b8e2eb2592e78a00a34 *src/MCMCDyn.c
 18a2ae02a20bb65ae2ef3cd04136f158 *src/MCMCDyn.h
-71f9b9aff4e4e7f62ab217d192598f8d *src/MHproposals_DynMLE.c
+39a97ee1bee6cb5755f8a60d4994c29b *src/MHproposals_DynMLE.c
 c37ce88451bedbd91ddc1f083a988798 *src/MHproposals_DynMLE.h
-96c60c871477d1d33236103beeba1dcd *src/MHproposals_DynMLE_block.c
+7466661a671394992a722fd96a6b9c38 *src/MHproposals_DynMLE_block.c
 29b4edd20e6932d5a8d8a4852f9fd401 *src/MHproposals_DynMLE_block.h
-53a3a8c3738fbea32272a209c84f5a05 *src/MHproposals_DynMoME.c
+d21d6e8bb16d56f9328beca4f0c84148 *src/MHproposals_DynMoME.c
 dfdf570f219291374a218d4cf50bfb25 *src/MHproposals_DynMoME.h
 ce88befec8215b10ebe5aa9b34b14d48 *src/changestats_duration.c
 6a267aecba2bfea6d9e670cbdff85644 *src/changestats_duration.h
@@ -70,4 +70,4 @@ be1af741a6a33eeadbed7568ff9b6675 *tests/dynamic_MLE_2.R
 bcf700997f07ee96ce441e8b2a4c0f47 *tests/dynamic_MLE_blockdiag.R
 c93dda79cf8520223f1391a885159462 *tests/examples.R
 0cb7bae204ea055251229b56af234939 *tests/sim_gf_sum.R
-141bd55acc2fa76fe2a4eab556fe60e4 *tests/simulate_networkDynamic.R
+5ebccb821721498eb12385dda366101a *tests/simulate_networkDynamic.R
