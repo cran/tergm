@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.stergm}
 \alias{control.stergm}
@@ -99,7 +99,8 @@ control.stergm(init.form=NULL,
                SA.phase2.jitter.mul=0.2, 
                SA.phase2.maxreljump=4, 
                SA.guard.mul = 4, 
-               SA.robust = FALSE, 
+               SA.robust = FALSE,
+               SA.oh.memory = 100000,
                SA.refine=c("mean","linear","none"), 
                SA.se=TRUE, 
                SA.phase3.samplesize.runs=10, 
@@ -119,7 +120,7 @@ control.stergm(init.form=NULL,
     \itemize{
       \item{Elements corresponding to
         terms enclosed in \code{offset()} are used as the fixed offset
-        coefficients.
+        coefficients. These should match the offset values given in \code{offset.coef.form}.
       }
       \item{Elements that do not correspond to offset terms and are not
         \code{NA} are used as starting values in the estimation. 
@@ -129,12 +130,14 @@ control.stergm(init.form=NULL,
         \code{\link[=control.ergm]{control$init.method}}.
       }
     }
-    Passing \code{control.ergm(init=coef(prev.fit))} can be used to ``resume''
+    Passing \code{control.ergm(init=coef(prev.fit))} can be used to "resume"
     an uncoverged \code{\link{ergm}} run, but see
     \code{\link{enformulate.curved}}.
   }
   \item{init.method}{Estimation method
-    used to acquire initial values for estimation. Unused at this time.
+    used to acquire initial values for estimation. If \code{NULL} (the default), the initial values
+    are computed using the edges dissolution approximation (Carnegie et al.) when appropriate. 
+    If set to "zeros", the initial values are set to zeros.
   }
   \item{force.main}{Logical:  If TRUE, then force MCMC-based estimation
     method, even if the exact MLE can be computed via maximum pseudolikelihood
@@ -360,6 +363,10 @@ control.stergm(init.form=NULL,
     Whether to use robust linear regression (for gradients) and
     covariance estimation.
   }
+
+  \item{SA.oh.memory}{
+    Absolute maximum number of data points per thread to store in the full optimization history.
+  }
   
   \item{SA.refine}{Method, if any, used to 
     refine the point estimate at the end: "linear" for linear interpolation, 
@@ -392,7 +399,7 @@ control.stergm(init.form=NULL,
   }
   \item{parallel.type}{API to use for parallel
     processing. Supported values are \code{"MPI"} and
-    \code{"SOCK"}. Defaults to using the \code{snow} package
+    \code{"PSOCK"}. Defaults to using the \code{parallel} package
     default.
   }
   \item{parallel.version.check}{Logical:  If TRUE, check that the version of

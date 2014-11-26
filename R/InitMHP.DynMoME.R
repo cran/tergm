@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #===================================================================
 # This file contains the 5 following MHP initializers, each
@@ -27,5 +27,10 @@ InitMHP.formationTNT <- function(arguments, nw, model) {
 
 InitMHP.dissolution <- function(arguments, nw, model) {
   MHproposal <- list(name = "Dissolution", inputs=NULL)
+  MHproposal
+}
+
+InitMHP.dissolutionTNT <- function(arguments, nw, model) {
+  MHproposal <- list(name = "DissolutionTNT", inputs=NULL)
   MHproposal
 }

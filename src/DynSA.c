@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "DynSA.h"
 
@@ -46,6 +46,8 @@ void MCMCDynSArun_wrapper(// Observed network.
   Model *F_m, *D_m, *M_m;
   MHproposal F_MH, D_MH;
   
+  if(*lasttoggle == 0) lasttoggle = NULL;
+
   Vertex *difftime, *difftail, *diffhead;
   difftime = (Vertex *) calloc(*maxchanges,sizeof(Vertex));
   difftail = (Vertex *) calloc(*maxchanges,sizeof(Vertex));
@@ -87,6 +89,7 @@ void MCMCDynSArun_wrapper(// Observed network.
   if(*status==MCMCDyn_OK){
     newnetworktail[0]=newnetworkhead[0]=EdgeTree2EdgeList(newnetworktail+1,newnetworkhead+1,nw,*maxedges);
     *time = nw->duration_info.time;
+    if(nw->duration_info.lasttoggle)
     memcpy(lasttoggle, nw->duration_info.lasttoggle, sizeof(int)*DYADCOUNT(*n_nodes, *bipartite, *dflag));
   }
 

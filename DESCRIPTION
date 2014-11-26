@@ -1,6 +1,6 @@
 Package: tergm
-Version: 3.1.4
-Date: 2014-01-16
+Version: 3.2.3
+Date: 2014-11-26
 Title: Fit, Simulate and Diagnose Models for Network Evolution based on
         Exponential-Family Random Graph Models
 Authors@R: c(
@@ -12,16 +12,18 @@ Authors@R: c(
 	person("Nicole Bohme", "Carnegie", role=c("ctb"), email="nicole.carnegie@nyu.edu"),
         person("Carter T.", "Butts", role=c("ctb"), email="buttsc@uci.edu"),
 	person("Ayn", "Leslie-Cook", role=c("ctb"), email="aynlc3@uw.edu"),
-	person("Skye", "Bender-deMoll", role=c("ctb"), email="skyebend@skyeome.net"))
+	person("Skye", "Bender-deMoll", role=c("ctb"), email="skyebend@skyeome.net"),
+  person("Li","Wang",role=c("ctb"),email="lxwang@gmail.com"),
+  person("Kirk","Li",role=c("ctb"),email="kirkli@uw.edu"))
 LinkingTo: ergm
-Depends: statnet.common (>= 3.1.1), ergm (>= 3.1.1), network (>=
-        1.9.0), networkDynamic (>= 0.6.1)
+Depends: statnet.common (>= 3.2), ergm (>= 3.2.3), network (>= 1.11),
+        networkDynamic (>= 0.7)
 Imports: robustbase (>= 0.9-10), coda, nlme
-Suggests: lattice, snow
+Suggests: lattice, parallel
 Description: An integrated set of extensions to the `ergm` package to analyze and simulate network evolution based on exponential-family random graph models (ERGM). "tergm" is a part of the "statnet" suite of packages for network analysis.
 License: GPL-3 + file LICENSE
 URL: http://www.statnet.org
-Packaged: 2014-01-22 05:57:25 UTC; pavel
+Packaged: 2014-12-09 05:27:09 UTC; pavel
 Author: Pavel N. Krivitsky [aut, cre],
   Mark S. Handcock [aut, ths],
   David R. Hunter [ctb],
@@ -30,8 +32,10 @@ Author: Pavel N. Krivitsky [aut, cre],
   Nicole Bohme Carnegie [ctb],
   Carter T. Butts [ctb],
   Ayn Leslie-Cook [ctb],
-  Skye Bender-deMoll [ctb]
+  Skye Bender-deMoll [ctb],
+  Li Wang [ctb],
+  Kirk Li [ctb]
 Maintainer: Pavel N. Krivitsky <pavel@uow.edu.au>
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2014-01-22 07:21:41
+Date/Publication: 2014-12-11 10:01:58

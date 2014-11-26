@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 library(tergm)
 
@@ -73,6 +73,7 @@ simtest <- function(S, edges, dur, n, dir=FALSE, bip=0){
             all.equal(sim.stats,summ.stats))
 }
 
+set.seed(1)
 cat("Undirected, unipartite:\n")
 simtest(20, 10, 10, 10, FALSE, FALSE)
 cat("Directed, unipartite:\n")

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ################################################################################
 # The <stergm> function fits stergms from a specified formation and dissolution
@@ -85,9 +85,13 @@ stergm.EGMME <- function(nw, formation, dissolution, constraints, offset.coef.fo
 
   if(!is.network(nw)) stop("Argument nw must be a network.")
 
-  if(is.null(nw %n% "lasttoggle")) nw %n% "lasttoggle" <- rep(round(-.Machine$integer.max/2), network.dyadcount(nw))
+#  if(is.null(nw %n% "lasttoggle")) nw %n% "lasttoggle" <- rep(round(-.Machine$integer.max/2), network.dyadcount(nw))
+	
   if(is.null(nw %n% "time")) nw %n% "time" <- 0
-   
+
+  # EGMME requires targets, or there will be an error
+  if (is.null(targets)) stop('stergm.EGMME requires targets parameter be specified')
+ 
   # Allow the user to specify targets as copied from formation or dissolution formula.
   if(is.character(targets)){
     targets <- switch(targets,
@@ -104,6 +108,13 @@ stergm.EGMME <- function(nw, formation, dissolution, constraints, offset.coef.fo
   formation <- ergm.update.formula(formation,nw~., from.new="nw")
   dissolution <- ergm.update.formula(dissolution,nw~., from.new="nw")
 
+  # target formula should not have offsets. removing them
+  if (any(offset.info.formula(targets)$term)) {
+    message("Targets formula should not contain offset terms;
+                they have been been removed.")
+    targets <- remove.offset.formula(targets)
+  }
+
   control.transfer <- list(EGMME.MCMC.burnin.min="MCMC.burnin.min",
                            EGMME.MCMC.burnin.max="MCMC.burnin.max",
                            EGMME.MCMC.burnin.pval="MCMC.burnin.pval",
@@ -114,18 +125,29 @@ stergm.EGMME <- function(nw, formation, dissolution, constraints, offset.coef.fo
 
   
   if(!is.null(target.stats)){
+
     nw.stats<-summary(targets)
     if(length(nw.stats)!=length(target.stats))
       stop("Incorrect length of the target.stats vector: should be ", length(nw.stats), " but is ",length(target.stats),".")
     
+    if (!is.null(control$init.form) && length(target.stats) != length(control$init.form)) {
+      if (length(target.stats) != length(control$SAN.control$coef)) {
+        cat('SAN initial coefficients should have same length as targets. Setting them to SAN defaults.\n')
+        control$SAN.control$coef <- NULL
+      }
+    }
+        
     if(verbose) cat("Constructing an approximate response network.\n")
     ## If target.stats are given, overwrite the given network and targets
     ## with SAN-ed network and targets.
+    
     newnw <- try({
       for(srun in seq_len(control$SAN.maxit)){
-        nw<-san(targets, target.stats=target.stats,
+        nw<-suppressWarnings(
+          san(targets, target.stats=target.stats,
                 control=control$SAN.control,
-                verbose=verbose)
+                constraints=constraints,
+                verbose=verbose))
         targets<-ergm.update.formula(targets,nw~., from.new="nw")
         nw.stats <- summary(targets)
         srun <- srun + 1
@@ -203,6 +225,7 @@ stergm.EGMME <- function(nw, formation, dissolution, constraints, offset.coef.fo
 
   if(control$parallel){
     cl <- ergm.getCluster(control, verbose=verbose)
+    if(verbose && !is.null(cl)) cat("Using parallel cluster.\n")
     on.exit(suppressWarnings(try(ergm.stopCluster(cl),silent=TRUE)))
   }else cl <- NULL
   

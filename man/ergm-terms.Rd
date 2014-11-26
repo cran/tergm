@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-terms}
 \alias{ergm-terms}
@@ -27,6 +27,7 @@
 \alias{InitErgmTerm.edgecov.mean.age}
 \alias{InitErgmTerm.degrange.mean.age}
 \alias{InitErgmTerm.degree.mean.age}
+
 \docType{methods}
 \title{Temporally-Sensitive Terms used in Exponential Family Random Graph Models}
 \description{
@@ -172,7 +173,7 @@
       if it is. This is, technically, an arbitrary value, but it should
       not have a substantial effect unless a non-negligible fraction of
       networks at the parameter configuration of interest is empty.  }
-    
+
     
   }
 }

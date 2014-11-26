@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss, model.mon,
                             control, MHproposal.form, MHproposal.diss, eval.optpars, cl=cl,
@@ -40,11 +40,11 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
     
     if(verbose) cat("Running stochastic optimization... ")
     zs <- if(!is.null(cl)){
-      library(snow)
+      library(parallel)
       # Conveniently, the first argument of stergm.EGMME.SA.Phase2.C
       # is the state of the optimization, so giving clusterApply a
       # list of states will call it for each thread's state.
-      clusterApply(cl, states, stergm.EGMME.SA.Phase2.C, model.form, model.diss, model.mon, MHproposal.form, MHproposal.diss, control, verbose=verbose)
+      parallel::clusterApply(cl, states, stergm.EGMME.SA.Phase2.C, model.form, model.diss, model.mon, MHproposal.form, MHproposal.diss, control, verbose=verbose)
     }else{
       list(stergm.EGMME.SA.Phase2.C(states[[1]], model.form, model.diss, model.mon, MHproposal.form, MHproposal.diss, control, verbose=verbose))
     }
@@ -65,11 +65,27 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
       colnames(oh.all) <- c(p.names,q.names)
     }
 
+    # Limit the size of the full history.
+    # TODO: Store a thinned or summarized version of "forgotten" iterations.
+    # TODO: Add an option to log it to external storage.
+    if(max(ind.all)>control$SA.oh.memory){
+      remember.after.ind <- max(ind.all) - control$SA.oh.memory
+
+      # Cut the ind.all last!
+      tid.all <-tid.all[ind.all>remember.after.ind]
+      oh.all <- oh.all[ind.all>remember.after.ind,,drop=FALSE]
+      jitters.all <- jitters.all[ind.all>remember.after.ind,,drop=FALSE]
+      ind.all <- ind.all[ind.all>remember.after.ind]
+
+      # Shift the indices so that they would start at 1.
+      ind.all <- ind.all - remember.after.ind
+    }
+    
     history$ind.all <- ind.all
     history$tid.all <- tid.all
     history$jitters.all <- jitters.all
     history$oh.all <- oh.all
-
+   
     min.ind.last <- max(ind.all) - control$SA.runlength*control$SA.interval + 1
     min.ind.keep <- max(ind.all) - max(
                                      max(ind.all)*control$SA.keep.oh,
@@ -93,6 +109,8 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
     history$jitters <- jitters <- jitters.all[ind.all>=min.ind.keep,,drop=FALSE]
     history$jitters.last <- jitters.last <- jitters.all[ind.all>=min.ind.last,,drop=FALSE]      
 
+    rm(ind.all, tid.all, jitters.all, oh.all); gc()
+
     # Plot if requested.
     if(control$SA.plot.progress && dev.interactive(TRUE)){
       library(lattice)
@@ -103,7 +121,7 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
       cols <- floor(sqrt(ncol(oh)))
       layout <- c(cols,ceiling(ncol(oh)/cols))
       
-      suppressWarnings(print(xyplot(window(do.call(mcmc.list,by(as.data.frame(oh),INDICES=list(tid=tid),mcmc,start=min.ind.keep)), thin=thin), panel = function(...) {panel.xyplot(...);panel.abline(0, 0)}, as.table = TRUE, layout = layout, xlab=NULL)))
+      suppressWarnings(print(lattice::xyplot(window(do.call(mcmc.list,by(as.data.frame(oh),INDICES=list(tid=tid),mcmc,start=min.ind.keep)), thin=thin), panel = function(...) {lattice::panel.xyplot(...);lattice::panel.abline(0, 0)}, as.table = TRUE, layout = layout, xlab=NULL)))
     }
     
     # Extract and return the "states" and the "history".
@@ -197,8 +215,8 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
     cat("Burning in... ")
     
     zs <- if(!is.null(cl)){
-      library(snow)
-      clusterApply(cl, seq_along(states), function(i) stergm.getMCMCsample(states[[i]]$nw, model.form, model.diss, model.mon, MHproposal.form, MHproposal.diss, states[[i]]$eta.form, states[[i]]$eta.diss, control.phase1, verbose))
+      library(parallel)
+      parallel::clusterApply(cl, seq_along(states), function(i) stergm.getMCMCsample(states[[i]]$nw, model.form, model.diss, model.mon, MHproposal.form, MHproposal.diss, states[[i]]$eta.form, states[[i]]$eta.diss, control.phase1, verbose))
     }else{
       list(stergm.getMCMCsample(states[[1]]$nw, model.form, model.diss, model.mon, MHproposal.form, MHproposal.diss, states[[1]]$eta.form, states[[1]]$eta.diss, control.phase1, verbose))
     }
@@ -230,6 +248,10 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
     ## Adjust the number of time steps between jumps using burn-in.
     edge.ages <- unlist(sapply(states, function(state) state$nw%n%"time"-ergm.el.lasttoggle(state$nw)[,3]+1))
     control$SA.burnin<-control$SA.interval<- round(min(control$SA.max.interval, max(control$SA.min.interval, if(length(edge.ages)>0) control$SA.interval.mul*mean(edge.ages)))/2)
+  
+  if(is.nan(control$SA.burnin)|is.null(control$SA.burnin)|is.na(control$SA.burnin))
+    control$SA.burnin <- control$SA.interval <- 10 # TODO: Kirk : check this
+  
     if(verbose>1){
       cat("New interval:",control$SA.interval ,"\n")
     }  
@@ -320,6 +342,7 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
 
         # This test is fast, so no need to thin.
         p.val.1 <- try(approx.hotelling.diff.test(ys)$p.value)
+        if(is.na(p.val.1)) p.val.1 <- 0
 
         # Thin the data to keep from bogging down.
         x <- unique(round(seq(from=1,to=NROW(history$oh),length.out=control$SA.stepdown.maxn)))
@@ -476,7 +499,8 @@ stergm.EGMME.SA <- function(theta.form0, theta.diss0, nw, model.form, model.diss
         if(verbose)cat("Finished.\n")
         states <- tmp$states
         history <- tmp$history
-
+        rm(tmp); gc()
+        
         min.ind.se <- max(history$ind.all)-control$SA.phase3.samplesize.runs*control$SA.runlength*control$SA.interval + 1
         sm.mon <- history$oh.all[history$ind.all>=min.ind.se,-(1:p),drop=FALSE]
         sm.tid <- history$tid.all[history$ind.all>=min.ind.se]
@@ -542,12 +566,15 @@ stergm.EGMME.SA.Phase2.C <- function(state, model.form, model.diss, model.mon,
   maxedges <- max(control$MCMC.init.maxedges, Clist.mon$nedges)
   maxchanges <- max(control$MCMC.init.maxchanges, Clist.mon$nedges)
 
+  eta.form <- ergm:::.deinf(state$eta.form)
+  eta.diss <- ergm:::.deinf(state$eta.diss)
+  
   repeat{
     z <- .C("MCMCDynSArun_wrapper",
             # Observed/starting network. 
             as.integer(Clist.form$tails), as.integer(Clist.form$heads),
-            time = if(is.null(Clist.form$time)) as.integer(0) else as.integer(Clist.form$time),
-            lasttoggle = if(is.null(Clist.form$time)) integer(network.dyadcount(state$nw)) else as.integer(Clist.form$lasttoggle),
+            time = as.integer(min(Clist.form$time,Clist.diss$time,Clist.diss$time)),
+            lasttoggle = as.integer(NVL(Clist.form$lasttoggle,Clist.diss$lasttoggle,Clist.mon$lasttoggle,0)),  
             as.integer(Clist.form$nedges),
             as.integer(Clist.form$n),
             as.integer(Clist.form$dir), as.integer(Clist.form$bipartite),
@@ -560,7 +587,7 @@ stergm.EGMME.SA.Phase2.C <- function(state, model.form, model.diss, model.mon,
             as.character(MHproposal.diss$name), as.character(MHproposal.diss$pkgname),
             as.double(Clist.diss$inputs),
             # Parameter fitting.
-            eta=as.double(c(state$eta.form,state$eta.diss)),
+            eta=as.double(c(eta.form, eta.diss)),
             as.integer(Clist.mon$nterms), as.character(Clist.mon$fnamestring), as.character(Clist.mon$snamestring),
             as.double(Clist.mon$inputs), 
             nw.diff=as.double(state$nw.diff),

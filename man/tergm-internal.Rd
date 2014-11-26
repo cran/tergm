@@ -5,12 +5,13 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{stergm-internal}
 \title{Internal stergm Objects}
 
 \alias{InitMHP.dissolution}
+\alias{InitMHP.dissolutionTNT}
 \alias{InitMHP.dissolutionMLE}
 \alias{InitMHP.dissolutionNonObservedMLE}
 \alias{InitMHP.formation}
@@ -45,6 +46,7 @@
 \alias{stergm.EGMME.initialfit}
 \alias{stergm.getMCMCsample}
 
+\alias{is.lasttoggle}
 
 \description{
 Internal stergm functions.}

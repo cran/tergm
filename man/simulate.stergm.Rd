@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{simulate.stergm}
 \alias{simulate.stergm}
@@ -32,6 +32,7 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
   nw.start = NULL,
   stats.form = FALSE,
   stats.diss = FALSE,
+  duration.dependent = NULL,
   verbose=FALSE, 
   \dots)
 \method{simulate}{network}(object, nsim=1, seed=NULL,
@@ -45,6 +46,7 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
   output=c("networkDynamic", "stats", "changes", "final"),
   stats.form = FALSE,
   stats.diss = FALSE,
+  duration.dependent = NULL,
   verbose=FALSE,
   \dots)
 \method{simulate}{networkDynamic}(object, nsim=1, seed=NULL,
@@ -60,6 +62,7 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
    output=c("networkDynamic", "stats", "changes"),
    stats.form = FALSE,
    stats.diss = FALSE,
+   duration.dependent = NULL,
    verbose=FALSE,
    \dots)
 }
@@ -179,13 +182,20 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
   \item{stats.form, stats.diss}{Logical: Whether to return
     formation/dissolution model statistics. This is not the recommended
     method: use \code{monitor} argument instead.}
-
+    
+  \item{duration.dependent}{Logical: Whether the model terms in formula 
+    or model are duration dependent. E.g., if a duration-dependent term 
+    is used in estimation/simulation model, the probability of forming or 
+    dissolving a tie may dependent on the age the dyad status. }
+        
   \item{verbose}{Logical:  If TRUE, extra information is printed
     as the Markov chain progresses. 
   }
   \item{\dots}{Further arguments passed to or used by methods.
   }
 }
+
+
 \details{
   The dynamic process is run forward and the results are returned. For
   the method for \code{\link{networkDynamic}}, the simulation is resumed
@@ -238,7 +248,10 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
     \code{\link[networkDynamic]{networkDynamic}} with simulated changes
     applied to it. The \code{\link{net.obs.period}} network attribute is
     updated (or added if not existing) to reflect the time period that was
-    simulated.
+    simulated. If the network does not have any \code{\link[networkDynamic]{persistent.ids}} 
+    defined for vertices, a vertex.pid will be attached in a vertex attribute 
+    named \code{'tergm_pid'} to facilitate 'bookkeeping' between the networkDynamic 
+    argument and the simulated network time step.
 
     Additionally, attributes (\code{\link{attr}}, not network
     attributes) are attached as follows:
@@ -249,21 +262,21 @@ Draw from the distribution of an Separable Temporal Exponential Family Random Gr
       \item{\code{coef.form}, \code{coef.diss}:}{Coefficients used in the simulation.}
       \item{\code{changes}:}{A four-column matrix summarizing the changes in the
 	\code{"changes"} output. (This may be removed in the future.)}
-    }
+    } 
 
     When \code{nsim>1}, a \code{\link{network.list}} of these
     \code{\link{networkDynamic}}s is returned.
   }
   
   \item{"changes"}{An integer matrix with four columns (\code{time},
-      \code{tail}, \code{head}, and \code{to}), giving the timestampled
+      \code{tail}, \code{head}, and \code{to}), giving the time-stamped
       changes relative to the current network. \code{to} is \code{1} if
       a tie was formed and \code{0} if a tie was dissolved. The
       convention for \code{time} is that it gives the time point during
       which the change is effective. For example, a row
       \code{c(5,2,3,1)} indicates that between time \eqn{4} and \eqn{5},
       a tie from node \eqn{2} to node \eqn{3} was formed, so that it was
-      absent at time ponit \eqn{4} and present at time point \eqn{5};
+      absent at time point \eqn{4} and present at time point \eqn{5};
       while a row \code{c(5,2,3,0)} indicates that in that time, that
       tie was dissolved, so that it is was present at time point \eqn{4}
       and absent at time point \eqn{5}.

@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "MHproposals_DynMoME.h"
 
@@ -19,13 +19,11 @@
 ***********************/
 void MH_Formation (MHproposal *MHp, Network *nwp) 
 {  
-  static Vertex nnodes;
-  static Edge ndyads;
+  static Dyad ndyads;
 
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=1;
-    nnodes = nwp[0].nnodes;
-    ndyads = DYADCOUNT(nnodes, 0, nwp[0].directed_flag);
+    ndyads = DYADCOUNT(nwp[0].nnodes, 0, nwp[0].directed_flag);
     return;
   }
   
@@ -57,16 +55,15 @@ void MH_Formation (MHproposal *MHp, Network *nwp)
 ***********************/
 void MH_FormationTNT (MHproposal *MHp, Network *nwp) 
 {  
-  Edge nedges, ndedges, nempty;
+  Edge nedges, ndedges;
+  Dyad nempty;
   static double comp=0.5, odds;
-  static Edge ndyads;
-  static Edge nnodes;
+  static Dyad ndyads;
   
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=1;
-    nnodes = nwp[0].nnodes;
     odds = comp/(1.0-comp);
-    ndyads = DYADCOUNT(nnodes, nwp->bipartite, nwp[0].directed_flag);
+    ndyads = DYADCOUNT(nwp[0].nnodes, nwp->bipartite, nwp[0].directed_flag);
     return;
   }
   
@@ -146,4 +143,63 @@ void MH_Dissolution (MHproposal *MHp, Network *nwp)
 	if(EdgetreeSearch(Mtail[0],Mhead[0],nwp[0].outedges)==0 && CheckTogglesValid(MHp, nwp)) break;
       }
     });
+}
+
+/********************
+   void MH_DissolutionTNT
+   Tie/no tie:  Gives at least 50% chance of
+   proposing a toggle of an existing (non-reference) edge, as opposed
+   to simple random toggles that rarely do so in sparse 
+   networks
+   Propose ONLY edges in the reference graph
+***********************/
+void MH_DissolutionTNT (MHproposal *MHp, Network *nwp) 
+{  
+  Edge nedges=nwp[0].nedges, ndedges=nwp[1].nedges;
+  Edge nedges0 = nedges + ndedges;
+  static double comp=0.5, odds;
+  
+  if(MHp->ntoggles == 0) { /* Initialize */
+    MHp->ntoggles=1;
+    odds = comp/(1.0-comp);
+    return;
+  }
+
+  if(nedges==0 && ndedges==0){  /* Attempting dissolution on an empty graph. */
+    Mtail[0]=MH_FAILED;
+    Mhead[0]=MH_IMPOSSIBLE;
+    return;
+  }
+
+  double logratio=0;
+  BD_LOOP({
+      if(ndedges != 0 && (nedges==0 || unif_rand() < comp)) { /* Select a discordant dyad at random */
+	GetRandEdge(Mtail, Mhead, nwp+1);
+	
+	if(nedges==0){
+	  logratio = log(ndedges*(1-comp));
+	}else{
+	  if(ndedges==1){
+	    logratio = log((double) ndedges / nedges0 / comp);
+	  }else{
+	    logratio = log((double) ndedges / (nedges + 1) / odds);
+	  }
+	}
+      }else{ /* select an edge in nwp[0] at random */
+	GetRandEdge(Mtail, Mhead, nwp);
+	
+	if(ndedges==0){
+	  logratio = log(nedges*comp);
+	}else{
+	  if(nedges==1){
+	    logratio = log(1.0 / nedges0 / (1-comp));
+	  }else{
+	    logratio = log((double) nedges / (ndedges+1) * odds);
+	  }
+	}
+      }
+    });
+  MHp->logratio += logratio;
+  //   Rprintf("nedges %d reference nddyads %d h %d t %d MHp->ratio %f\n", 
+  //	    nwp[0].nedges, nwp[1].nedges, tail, head, MHp->ratio); 
 }

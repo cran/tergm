@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #=========================================================================
 # This file contains the following 2 functions for computing changestat
@@ -73,6 +73,8 @@ tergm.godfather <- function(formula, changes=NULL, toggles=changes[,-4,drop=FALS
 
   nw <- ergm.getnetwork(formula)
   
+  formula <- ergm.update.formula(formula, nw~., from.new="nw")
+  
   if(is.networkDynamic(nw)){
     if(!is.null(toggles)) stop("Network passed already contains change or toggle information.")
 
@@ -107,8 +109,9 @@ tergm.godfather <- function(formula, changes=NULL, toggles=changes[,-4,drop=FALS
       stop("Network size and/or composition appears to change in the interval between start and end. This is not supported by ergm.godfather() at this time.")
 
     # Finally, we are ready to extract the network.
-    nw <- network.extract.with.lasttoggle(nw, start)
-    
+  duration.dependent <- if(is.durational(formula)){1} else {0}
+  nw <- network.extract.with.lasttoggle(nw, at=start, duration.dependent)
+
   }else{
     if(is.null(toggles)) stop("Either pass a networkDynamic, or provide change or toggle information.")
       
@@ -137,7 +140,7 @@ tergm.godfather <- function(formula, changes=NULL, toggles=changes[,-4,drop=FALS
   formula <- ergm.update.formula(formula, nw~., from.new="nw")
   m <- ergm.getmodel(formula, nw, expanded=TRUE, role="target")
   Clist <- ergm.Cprepare(nw, m)
-  m$obs <- summary(m$formula)
+  m$obs <- summary.statistics.network(m$formula)
   if(end.network){
     maxedges.sd <- sqrt(nrow(toggles)*0.25)*2 # I.e., if each toggle has probability 1/2 of being in a particular direction, this is the s.d. of the number of edges added.
     maxedges <- Clist$nedges + maxedges.sd*control$GF.init.maxedges.mul
@@ -148,7 +151,7 @@ tergm.godfather <- function(formula, changes=NULL, toggles=changes[,-4,drop=FALS
     z <- .C("godfather_wrapper",
             as.integer(Clist$tails), as.integer(Clist$heads),
             time = if(is.null(Clist$time)) as.integer(0) else as.integer(Clist$time),
-            lasttoggle = if(is.null(Clist$lasttoggle)) as.integer(NULL) else as.integer(Clist$lasttoggle),
+            lasttoggle = as.integer(NVL(Clist$lasttoggle,0)),             
             as.integer(Clist$nedges),
             as.integer(Clist$n),
             as.integer(Clist$dir), as.integer(Clist$bipartite),

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 stergm.EGMME.GD <- function(theta.form0, theta.diss0, nw, model.form, model.diss, model.mon,
                             control, MHproposal.form, MHproposal.diss, cl=NULL,
@@ -38,11 +38,12 @@ stergm.EGMME.GD <- function(theta.form0, theta.diss0, nw, model.form, model.diss
 
     x<-oh[,1:p,drop=FALSE][,!offsets,drop=FALSE] # #$%^$ gls() doesn't respect I()...
     ys <- oh[,-(1:p),drop=FALSE]
+    n <- nrow(ys)
     
     h.fits <-
       if(!is.null(cl)){
-        library(snow)
-        clusterApplyLB(cl, 1:q,
+        library(parallel)
+        parallel::clusterApplyLB(cl, 1:q,
                        function(i){
                          y<-ys[,i]
                          suppressWarnings(try(
@@ -58,15 +59,17 @@ stergm.EGMME.GD <- function(theta.form0, theta.diss0, nw, model.form, model.diss
                                     else lm(y~x), silent=TRUE))
                })
       }
-    
+
     bad.fits <- sapply(h.fits, inherits, "try-error") | apply(diff(ys)==0,2,all)
-    
+
 #    bad.fits <-     # Also, ignore fits where the statistics are too concentrated.    
 #      bad.fits | (apply(ys,2,function(y){
 #        freqs <- table(y)
 #        sum(freqs[-which.max(freqs)])
 #      })<nrow(h)/2)
 
+    rm(x, ys); gc()
+    
     if(all(bad.fits)) stop("The optimization appears to be stuck. Try better starting parameters, lower SA.init.gain, etc.")
     
     ## Grab the coefficients, t-values, and residuals.
@@ -75,7 +78,7 @@ stergm.EGMME.GD <- function(theta.form0, theta.diss0, nw, model.form, model.diss
 
     h.fit[,!bad.fits] <- sapply(h.fits[!bad.fits], coef)[seq_len(p.free+1),]
     
-    h.resid <- matrix(NA, nrow=NROW(ys), ncol=q)
+    h.resid <- matrix(NA, nrow=n, ncol=q)
     h.resid[,!bad.fits] <- sapply(h.fits[!bad.fits], resid)
 
     h.tvals[,!bad.fits] <- sapply(h.fits[!bad.fits],function(fit) summary(fit)$coefficients[seq_len(p.free+1),3])
@@ -107,6 +110,12 @@ stergm.EGMME.GD <- function(theta.form0, theta.diss0, nw, model.form, model.diss
     ## Adjust the number of time steps between jumps.
     edge.ages <- unlist(sapply(states, function(state) state$nw%n%"time"-ergm.el.lasttoggle(state$nw)[,3]+1))
     control$SA.burnin<-control$SA.interval<- round(min(control$SA.max.interval, max(control$SA.min.interval, if(length(edge.ages)>0) control$SA.interval.mul*mean(edge.ages)))/2)
+    
+    
+    if(is.nan(control$SA.burnin)|is.null(control$SA.burnin)|is.na(control$SA.burnin))
+        control$SA.burnin <- control$SA.interval <- 10 # TODO: Kirk : check this
+    
+    
     if(verbose>1){
       cat("New interval:",control$SA.interval ,"\n")
     }

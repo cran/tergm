@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "MHproposals_DynMLE.h"
 #include "edgelist.h"
@@ -21,7 +21,8 @@
 void MH_FormationMLE (MHproposal *MHp, Network *nwp) 
 {  
   static Vertex nnodes;
-  static Edge ndyads, nedges0;
+  static Edge nedges0;
+  static Dyad ndyads;
 
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=1;
@@ -52,7 +53,8 @@ void MH_FormationMLETNT(MHproposal *MHp, Network *nwp)
 {  
   static Vertex nnodes;
   Vertex tail,head;
-  static Edge ndyads, nedges0;
+  static Edge nedges0;
+  static Dyad ndyads;
   static double comp=0.5, odds;
   static Network discord;
 
@@ -76,7 +78,8 @@ void MH_FormationMLETNT(MHproposal *MHp, Network *nwp)
   }
   
 
-  Edge nedges = nwp->nedges, ndedges = discord.nedges, nempty = ndyads-nedges;
+  Edge nedges = nwp->nedges, ndedges = discord.nedges;
+  Dyad nempty = ndyads-nedges;
 
   if(nempty==0 && ndedges==0){ /* Attempting formation on a complete graph. */
     Mtail[0]=MH_FAILED;

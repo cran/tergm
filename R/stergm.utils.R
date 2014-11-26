@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 # Keeps a list of "named" graphic devices.
 #
@@ -39,7 +39,8 @@ get.dev <- local({
 .my.levelplot <- function(m,levels=80,...){
   bound <- max(na.omit(c(abs(m))))
 
-  levelplot(m, at=unique(c(seq(-bound,-.Machine$double.eps,length.out=levels/2+1),
+  require(lattice, quietly=TRUE, warn.conflicts=FALSE)
+  lattice::levelplot(m, at=unique(c(seq(-bound,-.Machine$double.eps,length.out=levels/2+1),
                  seq(.Machine$double.eps,+bound,length.out=levels/2+1))),
             col.regions=c(hsv(h=0,s=seq(1,2/levels,length.out=levels/2),v=1),rgb(0,0,0),
               hsv(h=.5,s=seq(2/levels,1,length.out=levels/2),v=1)),
@@ -52,46 +53,45 @@ get.dev <- local({
 # a network attribute representing that time point
 # as well as numeric vector named "lasttoggle" representing the age of every (off-diagonal, 
 # non-bipartite crossing) possible dyad in the network.
-network.extract.with.lasttoggle <- function(nwd, at){
-  nw <- network.extract(nwd, at=at)
-  nw %v% ".networkDynamicID" <- which(is.active(nwd, at=at, v=seq_len(network.size(nwd))))
-  
-  # There is probably a more efficient way to do this:
-
-  # Note that nw is still a networkDynamic, and still has vertex and
-  # edge activity.
-  lttails <- lapply(nw$mel, "[[", "outl")
-  ltheads <- lapply(nw$mel, "[[", "inl")
-  # I.e., from the edge attribute list, grab the "active" matrix, and from it, extract the highest (most recent) timestamp that's prior to or at at.
-  # Note that if x[x<=at] is empty, max(x[x<=at]) returns -Inf, which is what we want.
-  ltlts <- lapply(lapply(lapply(nw$mel, "[[", "atl"), "[[", "active"), function(x) suppressWarnings(max(x[x<=at])))
-
-  # Now, strip the networkDynamic information from it.
-  delete.vertex.attribute(nw, "active")
-  delete.edge.attribute(nw, "active")
-  class(nw) <- "network"
-  
-  ltm <-
-    if(is.bipartite(nw)) m <- matrix(-Inf, nw%n%"bipartite", network.size(nw) - nw%n%"bipartite")
-    else m <- matrix(-Inf, network.size(nw), network.size(nw))
-
-  for(i in seq_along(ltlts))
-    if(ltlts[[i]]!=-Inf){
-      e<-c(lttails[[i]],ltheads[[i]])
-      if(!all(e)) next
-      if(!is.directed(nw)) e <- c(min(e),max(e))
-      if(is.bipartite(nw)) e[2] <- e[2] - nw %n% "bipartite"
-      # The -1 is important: lasttoggle is shifted by -1 relative to
-      # networkDynamic (at least for now).
-      m[e[1],e[2]] <- ltlts[[i]] - 1 
-    }
-  m[m==-Inf] <- round(-.Machine$integer.max/2)
-  
-  nw %n% "time" <- at
-  nw %n% "lasttoggle" <- to.lasttoggle.matrix(m, is.directed(nw), is.bipartite(nw))
-
-  nw
+# updates: lasttoggle is NULL when duration.dependent is FALSE
+network.extract.with.lasttoggle <- function(nwd, at, duration.dependent){
+	nw <- network.extract(nwd, at=at)
+  # check if the appropriate pid is defined, and if not, add it
+  if (is.null(nwd%n%'vertex.pid')){
+	  nw %v% "tergm_pid" <- which(is.active(nwd, at=at, v=seq_len(network.size(nwd))))
+  }
+	if(duration.dependent==1){
+		lttails <- lapply(nw$mel, "[[", "outl")
+		ltheads <- lapply(nw$mel, "[[", "inl")
+		ltlts <- lapply(lapply(lapply(nw$mel, "[[", "atl"), "[[", 
+						"active"), function(x) suppressWarnings(max(x[x <= at])))
+		
+		ltm <- if (is.bipartite(nw)) 
+					m <- matrix(-Inf, nw %n% "bipartite", network.size(nw) - 
+									nw %n% "bipartite")
+				else m <- matrix(-Inf, network.size(nw), network.size(nw))
+		for (i in seq_along(ltlts)) if (ltlts[[i]] != -Inf) {
+				e <- c(lttails[[i]], ltheads[[i]])
+				if (!all(e)) 
+					next
+				if (!is.directed(nw)) 
+					e <- c(min(e), max(e))
+				if (is.bipartite(nw)) 
+					e[2] <- e[2] - nw %n% "bipartite"
+				m[e[1], e[2]] <- ltlts[[i]] - 1
+			}
+		m[m == -Inf] <- round(-.Machine$integer.max/2)
+		lasttoggle <-to.lasttoggle.matrix(m, is.directed(nw), is.bipartite(nw))
+	} 
+	else {  # non-duration dependent model
+		lasttoggle <- NULL
+	}
+	
+	nw %n% "time" <- at
+	nw %n% "lasttoggle" <- lasttoggle
+	nw
 }
+
 
 to.networkDynamic.lasttoggle <- function(nw){
   nwd <- nw

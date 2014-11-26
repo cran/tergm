@@ -5,13 +5,13 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{tergm.godfather}
 \alias{tergm.godfather}
 \alias{control.tergm.godfather}
 \title{
-  A function to apply a given series of changes a network.
+  A function to apply a given series of changes to a network.
 }
 \description{
   Gives the network a series of timed proposals it can't refuse. Returns the

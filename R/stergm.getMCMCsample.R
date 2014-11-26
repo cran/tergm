@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ############################################################################
 # The <stergm.getMCMCsample> function collects a sample of networks and
@@ -79,21 +79,21 @@ stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
   #
   Clist.form <- ergm.Cprepare(nw, model.form)
   Clist.diss <- ergm.Cprepare(nw, model.diss)
-  if(!is.null(model.mon)) Clist.mon <- ergm.Cprepare(nw, model.mon)
-
+  Clist.mon <- if(!is.null(model.mon)) Clist.mon <- ergm.Cprepare(nw, model.mon)
+  
   collect.form<-if(!is.null(control$collect.form)) control$collect.form else TRUE
   collect.diss<-if(!is.null(control$collect.diss)) control$collect.diss else TRUE
 
   maxedges <- control$MCMC.init.maxedges
   maxchanges <- control$MCMC.init.maxchanges
-  
   repeat{
     #FIXME: Separate MCMC control parameters and properly attach them.
+    
     z <- .C("MCMCDyn_wrapper",
             # Observed network.
             as.integer(Clist.form$tails), as.integer(Clist.form$heads),
             time = if(is.null(Clist.form$time)) as.integer(0) else as.integer(Clist.form$time),
-            lasttoggle = if(is.null(Clist.form$lasttoggle)) as.integer(NULL) else as.integer(Clist.form$lasttoggle), 
+            lasttoggle = as.integer(NVL(Clist.form$lasttoggle,Clist.diss$lasttoggle,Clist.mon$lasttoggle,0)),  
             as.integer(Clist.form$nedges),
             as.integer(Clist.form$n),
             as.integer(Clist.form$dir), as.integer(Clist.form$bipartite),
@@ -102,13 +102,13 @@ stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
             as.character(Clist.form$fnamestring),
             as.character(Clist.form$snamestring),
             as.character(MHproposal.form$name), as.character(MHproposal.form$pkgname),
-            as.double(Clist.form$inputs), as.double(eta.form),
+            as.double(Clist.form$inputs), as.double(ergm:::.deinf(eta.form)),
             # Dissolution terms and proposals.
             as.integer(Clist.diss$nterms), 
             as.character(Clist.diss$fnamestring),
             as.character(Clist.diss$snamestring),
             as.character(MHproposal.diss$name), as.character(MHproposal.diss$pkgname),
-            as.double(Clist.diss$inputs), as.double(eta.diss),
+            as.double(Clist.diss$inputs), as.double(ergm:::.deinf(eta.diss)),
             # Monitored terms.
             if(!is.null(model.mon)) as.integer(Clist.mon$nterms) else as.integer(0), 
             if(!is.null(model.mon)) as.character(Clist.mon$fnamestring) else character(0),
@@ -173,9 +173,10 @@ stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
   
 
   newnetwork<-newnw.extract(nw,z)
-  newnetwork %n% "time" <- z$time
-  newnetwork %n% "lasttoggle" <- z$lasttoggle
-
+  if(is.durational(model.form) || is.durational(model.diss) || is.durational(model.mon)){
+    newnetwork %n% "time" <- z$time
+    newnetwork %n% "lasttoggle" <- z$lasttoggle
+  }
   diffedgelist<-if(control$changes) {
     if(z$diffnwtime[1]>0){
       tmp <- cbind(z$diffnwtime[2:(z$diffnwtime[1]+1)],z$diffnwtails[2:(z$diffnwtails[1]+1)],z$diffnwheads[2:(z$diffnwheads[1]+1)],z$diffnwdirs[2:(z$diffnwdirs[1]+1)])

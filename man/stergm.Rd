@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{stergm}
 \alias{stergm}
@@ -100,7 +100,7 @@
     parameters.
   }
   \item{targets}{One-sided \code{\link{ergm}}-style formula specifying statistics whose
-    moments are used for the EGMME. Unused for CMLE and CMPLE.
+    moments are used for the EGMME. Unused for CMLE and CMPLE. Targets is required for EGMME estimation. It may contain any valid ergm terms. If specified as "formation" or "dissolution", it copies the formula from the respective model. Any offset terms are removed automatically.
   }
 
   \item{target.stats}{
@@ -122,36 +122,50 @@
   \item{\dots}{Additional arguments, to be passed to lower-level 
     functions.
   }  
-}
-\section{Model Terms}{
+  
+  }
+
+\details{
+\strong{Model Terms}
   See \code{\link{ergm}} and  \code{\link{ergm-terms}} for details. At
   this time, only linear ERGM terms are allowed.
+  \itemize{
+  \item{For a brief demonstration, please see the tergm package vignette: \code{browseVignettes(package='tergm')}}
+  \item{A more detailed tutorial is avalible on the statnet wiki: \url{http://statnet.csde.washington.edu/workshops/SUNBELT/current/tergm/tergm_tutorial.pdf}}
+  \item{For more usage examples, see the wiki page at \url{https://statnet.csde.washington.edu/trac/wiki/tergmUsage}
+  }}
 }
-\value{\code{\link{stergm}} returns an object of class \code{\link{stergm}} that is a list
+
+
+
+\value{
+\code{\link{stergm}} returns an object of class \code{\link{stergm}} that is a list
   consisting of the following elements:
-  \item{formation, dissolution}{Formation and dissolution formulas,
+  \describe{
+  \item{\code{formation, dissolution}}{Formation and dissolution formulas,
     respectively.}
-  \item{targets}{The targets formula.}
-  \item{target.stats}{The target statistics.}
-  \item{estimate}{The type of estimate.}
-  \item{opt.history}{A matrix containing the full trace of the EGMME
+  \item{\code{targets}}{The targets formula.}
+  \item{\code{target.stats}}{The target statistics.}
+  \item{\code{estimate}}{The type of estimate.}
+  \item{\code{opt.history}}{A matrix containing the full trace of the EGMME
     optimization process: coefficients tried and target statistics
     simulated.}
-  \item{sample}{An \code{\link{mcmc}} object containing target
+  \item{\code{sample}}{An \code{\link{mcmc}} object containing target
     statistics sampled at the estimate.}
-  \item{covar}{The full estimated variance-covariance matrix of the
+  \item{\code{covar}}{The full estimated variance-covariance matrix of the
     parameter estimates for EGMME. (Note that although the CMLE
     formation parameter estimates are independent of the dissolution
     parameter estimates due to the separability assumption, this is not
     necessarily the case for EGMME.) }
-  \item{formation.fit, dissolution.fit}{For CMLE and CMPLE,
+  \item{\code{formation.fit, dissolution.fit}}{For CMLE and CMPLE,
     \code{\link{ergm}} objects from fitting formation and dissolution,
     respectively. For EGMME, stripped down \code{\link{ergm}}-like lists.}
-  \item{network}{For \code{estimate=="EGMME"}, the original network; for
+  \item{\code{network}}{For \code{estimate=="EGMME"}, the original network; for
     \code{estimate=="CMLE"} or \code{estimate=="CMPLE"}, a
     \code{\link{network.list}} (a discrete series of networks) to which the
     model was fit.}
-  \item{control}{The control parameters used to fit the model.}
+  \item{\code{control}}{The control parameters used to fit the model.}
+  }
   
   See the method \code{\link{print.stergm}} for details on how
   an \code{\link{stergm}} object is printed.  Note that the

@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #ifndef MHproposals_DynMoME_H
 #define MHproposals_DynMoME_H
@@ -18,10 +18,7 @@
 void MH_Formation(MHproposal *MHp, Network *nwp);
 void MH_FormationTNT(MHproposal *MHp, Network *nwp);
 void MH_Dissolution(MHproposal *MHp, Network *nwp);
-
-void MH_BipartiteFormation (MHproposal *MHp, Network *nwp);
-void MH_BipartiteFormationTNT (MHproposal *MHp, Network *nwp);
-void MH_BipartiteDissolution (MHproposal *MHp, Network *nwp);
+void MH_DissolutionTNT(MHproposal *MHp, Network *nwp);
 
 #endif 
 

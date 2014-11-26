@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 .onAttach <- function(lib, pkg){
   sm <- statnetStartupMessage("tergm", c("statnet"), FALSE)
@@ -47,6 +47,9 @@
   ergm.MHP.table("f", "Bernoulli", "bd",  1, "TNT", "formationTNT")
   ergm.MHP.table("d", "Bernoulli", "",  0, "random", "dissolution")
   ergm.MHP.table("d", "Bernoulli", "bd",  0, "random", "dissolution")
+  ergm.MHP.table("d", "Bernoulli", "",  1, "TNT", "dissolutionTNT")
+  ergm.MHP.table("d", "Bernoulli", "bd",  1, "TNT", "dissolutionTNT")
+
 }
 
 .RegisterConstraintImplications <- function(){
