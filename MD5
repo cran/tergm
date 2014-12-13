@@ -1,4 +1,4 @@
-fddd64b9f13c556ce142bd06b1a9d296 *DESCRIPTION
+c0241f200d560a201767dd93a1d7d0ec *DESCRIPTION
 7795e8786081a8317c5465da3835c2fd *LICENSE
 ecb559f95489a0a7ec7e9df10c30b8a4 *NAMESPACE
 d6448c54b3fbae8548c69704b2927b6e *R/InitConstraint.R
@@ -30,12 +30,12 @@ a9f7736e58dcaa4b4450e83dfb3ee22b *R/stergm.utils.R
 68853ee53e6748c4f8b6e0ce6107f6c5 *R/summary.statistics.networkDynamic.R
 e182aa5866618d980035ec53c09f6acf *R/summary.stergm.R
 c7a0241d89f0b2ac57e1392e40df9d48 *R/zzz.R
-7e36c089f6f3049bf4a4c523799675e9 *build/vignette.rds
+bada9ff2d1606cdcec31040de7f8bca3 *build/vignette.rds
 96d67799d02ad0bd330bc64846cd151d *inst/CITATION
-e8c116441b8d3612fcf7e248c30f65f1 *inst/NEWS.Rd
+3e8c8ee36aef42d1c28b779ec3981848 *inst/NEWS.Rd
 1ecbedad5f3df14d1880a66e1549934f *inst/doc/STERGM.R
 39f86a3495aefe92f1932cf1062d385e *inst/doc/STERGM.Snw
-c3cabf2c5b12248b5c7a4372ed929883 *inst/doc/STERGM.pdf
+77938d7604dc77b1824fe60011f23ce4 *inst/doc/STERGM.pdf
 21a32f7ae714c1c9f27b18e3fd0974b8 *man/coef.stergm.Rd
 9711bdebf8eae49fe93a1ae80a304832 *man/control.simulate.stergm.Rd
 3134ef86d696c831cdb9639fe4001f54 *man/control.stergm.Rd
@@ -54,7 +54,7 @@ b6f86ce7670f2014440688a9f46277ca *man/tergm-internal.Rd
 60039bd4e8454e2b5b49903516897dcd *man/tergm.godfather.Rd
 7dbb37784284fc0f4c2f9dbbe39b8b0c *src/DynSA.c
 a8fa1ee1241f30190ff625a35e3f40ab *src/DynSA.h
-55f7c391a0956fbbce6bcf9540c10905 *src/MCMCDyn.c
+8c5cf174dc45bb262e2664240f9148c6 *src/MCMCDyn.c
 d9f84b72d267a9300b96e521488cade4 *src/MCMCDyn.h
 f7206d9bd816c4f85182139f4266d7b3 *src/MHproposals_DynMLE.c
 cef18a3a85d545bce16fcedf6fe86ce2 *src/MHproposals_DynMLE.h
