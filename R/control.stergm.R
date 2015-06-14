@@ -23,8 +23,8 @@ control.stergm<-function(init.form=NULL,
                          MCMC.init.maxchanges=20000,
                          MCMC.packagenames=c(),
                          
-                         CMLE.MCMC.burnin = 10000,
-                         CMLE.MCMC.interval = 100,
+                         CMLE.MCMC.burnin = 1024*16,
+                         CMLE.MCMC.interval = 1024,
                          CMLE.control=NULL,
                          CMLE.control.form=control.ergm(init=init.form, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop.weights=MCMC.prop.weights.form, MCMC.prop.args=MCMC.prop.args.form, MCMC.init.maxedges=MCMC.init.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
                          CMLE.control.diss=control.ergm(init=init.diss, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop.weights=MCMC.prop.weights.diss, MCMC.prop.args=MCMC.prop.args.diss, MCMC.init.maxedges=MCMC.init.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
@@ -99,6 +99,7 @@ control.stergm<-function(init.form=NULL,
                          SA.phase2.jitter.mul=0.2, # The jitter standard deviation of each parameter is this times its standard deviation sans jitter.
                          SA.phase2.maxreljump=4, # Maximum jump per run, relative to the magnitude of other jumps in the history.
                          SA.guard.mul = 4, # The multiplier for the range of parameter values to compute the guard width.
+                         SA.par.eff.pow = 1, # How do we scale rows of the estimating equation as a function of G?
                          SA.robust = FALSE, # Should the (slower) robust linear regression and covariance estimation be used?
                          SA.oh.memory = 100000, # Maximum number of jumps to store.
                          

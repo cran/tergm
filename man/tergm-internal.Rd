@@ -8,48 +8,33 @@
 %  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{stergm-internal}
-\title{Internal stergm Objects}
+\title{Internal tergm Objects}
 
-\alias{InitMHP.dissolution}
-\alias{InitMHP.dissolutionTNT}
-\alias{InitMHP.dissolutionMLE}
-\alias{InitMHP.dissolutionNonObservedMLE}
-\alias{InitMHP.formation}
-\alias{InitMHP.formationMLE}
-\alias{InitMHP.formationMLETNT}
-\alias{InitMHP.formationNonObservedMLE}
-\alias{InitMHP.formationTNT}
-\alias{InitMHP.dissolutionMLEblockdiag}
-\alias{InitMHP.dissolutionNonObservedMLEblockdiag}
-\alias{InitMHP.formationMLEblockdiag}
-\alias{InitMHP.formationMLEblockdiagTNT}
-\alias{InitMHP.formationNonObservedMLEblockdiag}
-\alias{InitMHP.dissolutionMLETNT}
-\alias{InitMHP.dissolutionMLEblockdiagTNT}
 
-\alias{combine.networks}
 
-\alias{get.dev}
+%\alias{combine.networks}
 
-\alias{network.extract.with.lasttoggle}
-\alias{networkDynamic.apply.changes}
-\alias{all.same}
-\alias{to.networkDynamic.lasttoggle}
+%\alias{get.dev}
+
+%\alias{network.extract.with.lasttoggle} 
+%\alias{networkDynamic.apply.changes}
+%\alias{all.same}
+%\alias{to.networkDynamic.lasttoggle}
 
 
 \alias{control.logLik.stergm}
-\alias{stergm.CMLE}
-\alias{stergm.EGMME}
-\alias{stergm.EGMME.GD}
-\alias{stergm.EGMME.SA}
-\alias{stergm.EGMME.SA.Phase2.C}
-\alias{stergm.EGMME.initialfit}
-\alias{stergm.getMCMCsample}
+%\alias{stergm.CMLE}
+%\alias{stergm.EGMME}
+%\alias{stergm.EGMME.GD}
+%\alias{stergm.EGMME.SA}
+%\alias{stergm.EGMME.SA.Phase2.C}
+%\alias{stergm.EGMME.initialfit}
+%\alias{stergm.getMCMCsample}
 
-\alias{is.lasttoggle}
+%\alias{is.lasttoggle}
 
 \description{
-Internal stergm functions.}
+Internal tergm functions.}
 
 \details{
 Most of these are not to be called by the user (or in some cases are just

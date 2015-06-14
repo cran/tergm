@@ -14,23 +14,38 @@
 % When a release is forked, copy the sections to a new release and
 % delete unused sections.
 
-\section{Changes in version 3.2.4}{
-   %%  \subsection{NEW FEATURES}{
-   %%   \itemize{
-   %%   }
+\section{Changes in version 3.3}{
+    \subsection{NEW FEATURES}{
+     \itemize{
+       \item A new control parameter, SA.par.eff.pow, now controls the degree to which the magnitude of the gradient afects the rescaling of the estimating functions (see help): higher means that "stronger" parameters effectively get lower gain, making the optimization more stable.
+       \item Running with verbose=TRUE now prints gc() output periodically. 
+       \item Most durational functions can now take a binary option log=, which will result in them using log-ages instead of raw ages. (In a discrete-time model, there are no 0-age ties, so log transformation is safe.) 
+       \item tergm.godfather example now tests for a few more terms, degrange ages in particular. 
+       \item Implemented reference to MH_listTNT in applicable constraints in tergm as well.
+       \item Durational statistics can now take NULL as their "role", disabling role testing.
+     }
      
-   %% }
+   }
 
   \subsection{BUG FIXES}{
     \itemize{
-      \item{Some potential memory issues revealed by Valgrind have been fixed.}
+      \item  Running STERGM EGMME with parallel > 0 no longer causes it to eat up all the memory. 
+      \item{Namespace prefixing has been added to some functions called from external packages to deal with CRAN check warnings, replaced require() and library() calls with requireNamespace()}
+      \item{updated CITATION file to deal with CRAN check warnings (\code{packageDescription} is no longer used)}
+      \item  Added S3 method registration in NAMESPACE for all S3
+      functions
+      \item Handling of \code{\link{networkDynamic}} inputs has been improved.
     }
   }
 
-  %% \subsection{OTHER USER-VISIBLE CHANGES}{
-  %%   \itemize{
-  %%   }
-  %% }
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item Changed CMLE MCMC default parameters to match those of ergm.
+      \item Additions and corrections to documentation
+      \item{ Most formerly undocumented 'internal' functions have been made internal by the \code{NAMESPACE}. As far as we know, this avoids functions in use by reverse-Depending packages.  These currently appear as commented items in the \code{NAMESPACE} file.
+  }
+    }
+  }
 
   % \subsection{NEW FEATURES}{
   %   \itemize{
@@ -68,7 +83,16 @@
 
 }
 
-\section{Changes in version 3.2.3}{
+\section{Changes in version 3.2.4}{
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{Some potential memory issues revealed by Valgrind have been fixed.}
+    }
+  }
+}
+
+\section{Changes in version 3.2}{
     \subsection{NEW FEATURES}{
      \itemize{
        \item Speed improvements. Internal data handling has been modified to avoid allocating (and passing around) a large matrix of tie ages unless the formula/model explicitly requires tie duration information. This increases speed of model initialization, which is especially helpful when simulating a network where the model must be re-initialized at each timestep (i.e. models with vital dynamics).
@@ -100,9 +124,43 @@
     If set to "zeros", the initial values are set to zeros.
         \item \code{SA.oh.memory = 100000} Absolute maximum number of data points per thread to store in the full optimization history.
       }
-      \item  Changes to \code{simulate.stergm} parameters: addition of \code{duration.dependent} parameter: {Logical: Whether the model terms in formula or model are duration dependent. E.g., if a duration-dependent term  is used in estimation/simulation model, the probability of forming or  dissolving a tie may dependent on the age the dyad status. If TRUE, the matrix of tie ages will be allocated.}
+      \item  Changes to \code{simulate.stergm} parameters: addition of \code{duration.dependent} parameter: {Logical: Whether the model terms in formula or model are duration dependent. E.g., if a duration-dependent term  is used in estimation/simulation model, the probability of forming or dissolving a tie may dependent on the age the dyad status. If TRUE, the matrix of tie ages will be allocated.}
     }
   }
+
+  % \subsection{NEW FEATURES}{
+  %   \itemize{
+  %   }
+  % }
+  
+  % \subsection{DEPRECATED & DEFUNCT}{
+  %   \itemize{
+  %   }
+  % }
+  
+  % \subsection{C-LEVEL FACILITIES}{
+  %   \itemize{
+  %     \item It is not clear that we need a subsection called "C-LEVEL FACILITIES".
+  %   }
+  % }
+
+  % \subsection{UTILITIES}{
+  %   \itemize{
+  %     \item Likewise, "UTILITIES" is probably unnecessary.
+  %   }
+  % }
+
+  % \subsection{INSTALLATION}{
+  %   \itemize{
+  %     \item ... as is "INSTALLATION".
+  %   }
+  % }
+
+  % \subsection{PACKAGE INSTALLATION}{
+  %   \itemize{
+  %     \item ditto.
+  %   }
+  % }
 
 }
 \section{Changes in version 3.1.3}{
