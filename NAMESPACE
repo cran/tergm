@@ -3,6 +3,7 @@ useDynLib(tergm)
 
 importFrom(utils, packageDescription)
 importFrom(robustbase, lmrob, covMcd)
+importFrom(MASS, ginv)
 importFrom(coda, mcmc, mcmc.list, effectiveSize)
 importFrom(nlme, gls, corAR1)
 import(statnet.common, ergm, network, networkDynamic)
@@ -56,12 +57,12 @@ tergm.godfather
 # to.networkDynamic.lasttoggle    made internal
 )
 
-# export all the ergm terms
-exportPattern("^InitErgmTerm.*")
-# export all the MH proposals
-exportPattern("^InitMHP.*")
-# export all the constaints
-exportPattern("^InitConstraint.*")
+## # export all the ergm terms
+## exportPattern("^InitErgmTerm.*")
+## # export all the MH proposals
+## exportPattern("^InitMHP.*")
+## # export all the constaints
+## exportPattern("^InitConstraint.*")
 
 S3method('coef','stergm')
 S3method('gof','stergm')
