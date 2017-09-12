@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2008-2017 Statnet Commons
 #######################################################################
 ########################################################################
 # The <control.simulate.X> functions each create a list of paramaters
@@ -57,7 +57,7 @@ control.simulate.network<-function(MCMC.burnin.min=1000,
     for(arg in names(formals(sys.function())))
       control[arg]<-list(get(arg))
 
-    set.control.class()
+    set.control.class("control.simulate.network")
   }
 
 control.simulate.stergm<-function(MCMC.burnin.min=NULL,
@@ -76,7 +76,7 @@ control.simulate.stergm<-function(MCMC.burnin.min=NULL,
     for(arg in names(formals(sys.function())))
       control[arg]<-list(get(arg))
 
-    set.control.class()
+    set.control.class("control.simulate.stergm")
   }
 
 

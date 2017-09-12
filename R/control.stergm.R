@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2008-2017 Statnet Commons
 #######################################################################
 ###########################################################################
 # The <control.stergm> function allows the ergm fitting process to be tuned
@@ -128,5 +128,5 @@ control.stergm<-function(init.form=NULL,
   for(arg in match.arg.pars)
     control[arg]<-list(match.arg(control[[arg]][1],eval(formal.args[[arg]])))
 
-  set.control.class()
+  set.control.class("control.stergm")
 }

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2008-2017 Statnet Commons
 #######################################################################
 #========================================================================
 # This file contains the following 3 functions for simulating stergms
@@ -93,7 +93,7 @@ simulate.stergm<-function(object, nsim=1, seed=NULL,
                           stats.diss = FALSE,
                           duration.dependent = NULL,
                           verbose=FALSE, ...){
-  check.control.class(c("simulate.stergm","simulate.network"))
+  check.control.class(c("simulate.stergm","simulate.network"), "simulate.stergm")
   
   control.transfer <- list(MCMC.prop.weights="MCMC.prop.weights",
                            MCMC.prop.args="MCMC.prop.args",
@@ -151,7 +151,7 @@ simulate.network <- function(object, nsim=1, seed=NULL,
                              duration.dependent=NULL,
                              verbose=FALSE,...) {
   if(length(list(...))) stop("Unknown arguments: ",names(list(...)))
-  check.control.class(myname="STERGM simulate.network")
+  check.control.class("simulate.network", "STERGM simulate.network")
 
   if(!is.null(statsonly)){
     warning("Argument `statsonly' for STERGM simulate() is deprecated and may be removed in a future version. Use `output' instead.")

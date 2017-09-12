@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2014 Statnet Commons
+ *  Copyright 2008-2017 Statnet Commons
  */
 #include "MCMCDyn.h"
 
@@ -319,9 +319,18 @@ MCMCDynStatus MCMCSampleDyn(// Observed and discordant network.
 
     // Proposal failed.
     if(MH->toggletail[0]==MH_FAILED){
-      if(MH->togglehead[0]==MH_UNRECOVERABLE) 
+      switch(MH->togglehead[0]){
+      case MH_UNRECOVERABLE:
 	error("Something very bad happened during proposal. Memory has not been deallocated, so restart R soon.");
-      if(MH->togglehead[0]==MH_IMPOSSIBLE) break;
+	
+      case MH_IMPOSSIBLE:
+	// Proceed to the next phase.
+	return;
+	
+      case MH_UNSUCCESSFUL:
+      case MH_CONSTRAINT:
+	continue;
+      }
     }
 
     ChangeStats(MH->ntoggles, MH->toggletail, MH->togglehead, nwp, m);

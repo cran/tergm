@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2008-2017 Statnet Commons
 #######################################################################
 
 control.logLik.stergm<-function(control.form = control.logLik.ergm(),
@@ -21,5 +21,5 @@ control.logLik.stergm<-function(control.form = control.logLik.ergm(),
   for(arg in names(formal.args))
     control[arg]<-list(get(arg))
 
-  set.control.class()
+  set.control.class("control.logLik.stergm")
 }

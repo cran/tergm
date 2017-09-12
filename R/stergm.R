@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2008-2017 Statnet Commons
 #######################################################################
 ################################################################################
 # stergm --- fit Separable Temporal ERGMs.
@@ -16,7 +16,7 @@ stergm <- function(nw, formation, dissolution, constraints = ~., estimate, times
                    eval.loglik=TRUE,
                    control=control.stergm(),
                    verbose=FALSE, ...) {
-  check.control.class()
+  check.control.class("stergm", "stergm")
   
   if(!is.null(control$seed))  set.seed(as.integer(control$seed))
 
