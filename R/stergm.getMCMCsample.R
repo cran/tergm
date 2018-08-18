@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2008-2017 Statnet Commons
+#  Copyright 2008-2018 Statnet Commons
 #######################################################################
 ############################################################################
 # The <stergm.getMCMCsample> function collects a sample of networks and
@@ -15,11 +15,11 @@
 #
 # --PARAMETERS--
 #   nw             : a network object
-#   model.form     : a formation model, as returned by <ergm.getmodel>
-#   model.diss     : a dissolution model, as returned by <ergm.getmodel>
-#   MHproposal.form: a list of parameters needed for MHproposals of the
+#   model.form     : a formation model, as returned by <ergm_model>
+#   model.diss     : a dissolution model, as returned by <ergm_model>
+#   proposal.form: a list of parameters needed for proposals of the
 #                    formations
-#   MHproposal.diss: a list of parameters needed for MHproposals of the
+#   proposal.diss: a list of parameters needed for proposals of the
 #                    dissolutions
 #   init.form    : the initial model coefficients for 'model.form'
 #   init.diss    : the initial model coefficients for 'model.diss'
@@ -51,7 +51,7 @@
 # Note:  In reality, there should be many fewer arguments to this function,
 # since most info should be passed via Clist (this is, after all, what Clist
 # is for:  Holding all arguments required for the .C call).  In particular,
-# the elements of MHproposal.form, control, verbose, should certainly
+# the elements of proposal.form, control, verbose, should certainly
 # be part of Clist.  But this is a project for another day!
 #
 # --RETURNED--
@@ -69,11 +69,65 @@
 #
 ############################################################################
 
-
-
+#' @include tergm-deprecated.R
+#' @describeIn tergm-deprecated Use [stergm_MCMC_sample()] instead.
+#' @export stergm.getMCMCsample
 stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
-                                  MHproposal.form, MHproposal.diss, eta.form, eta.diss, control, 
-                                  verbose){
+                                 proposal.form, proposal.diss, eta.form, eta.diss, control, 
+                                 verbose, ...){
+  .dep_once("stergm_MCMC_sample")
+  out <- stergm_MCMC_sample(nw, model.form, model.diss, model.mon,
+                            proposal.form, proposal.diss,  control=control,
+                            eta.form=eta.form, eta.diss=eta.diss, verbose=verbose, ...)
+
+}
+
+
+
+
+#' Collects a sample of networks and returns the formation and dissolution
+#' statistics of each sample
+#' 
+#' \code{stergm_MCMC_sample} is a low-level internal function not intended to
+#' be called directly by end users. It collects a sample of networks and
+#' returns the formation and dissolution statistics of each sample, along with
+#' a toggle matrix of the changes needed from the original network to each in
+#' the sample.
+#' 
+#' This function is normally called inside \code{\link{simulate.stergm}} to
+#' prepare inputs for the C sampling code and return its results
+#' 
+#' @aliases stergm_MCMC_sample stergm_MCMC_slave
+#' @param nw a \code{\link{network}} object
+#' @param model.form,model.diss,model.mon formation, dissolution, and
+#' monitoring model, as returned by \code{\link{ergm_model}}
+#' @param proposal.form,proposal.diss a list of parameters needed for
+#' proposals of the formations and dissolutions
+#' @param eta.form,eta.diss vectors of natural parameters.
+#' @param control list of control paramters, probably from
+#' \code{\link{control.stergm}}
+#' @param verbose logical; whether this and other functions should be verbose
+#' @return returns the MCMC sample as a list containing: \itemize{
+#' \item statsmatrix.form: the matrix of sampled statistics for 'model.form'
+#' RELATIVE TO INITIAL NETWORK \item statsmatrix.diss: the matrix of sampled
+#' statistics for 'model.form' RELATIVE TO INITIAL NETWORK
+#' \item statsmatrix.mon: the matrix of sampled statistics for 'model.mon'
+#' RELATIVE TO INITIAL NETWORK \item newnetwork : the final network from the
+#' sampling process \item changed : a toggle matrix, where the first column is
+#' the timestamp of the toggle and the 2nd and 3rd columns are the head & tail
+#' of the toggle; this is only returned if `control$changes` is not NULL
+#' \item maxchanges : the "MCMC Dyn workspace"; see 'maxchanges' in the input
+#' param list }
+#' @seealso \code{\link{simulate.stergm}}
+#' @keywords internal
+#' @export
+stergm_MCMC_sample <- function(nw, model.form, model.diss, model.mon,
+                               proposal.form, proposal.diss, control,
+                               theta.form=NULL, theta.diss=NULL,
+                               verbose=FALSE,...,
+                               eta.form=ergm.eta(theta.form, model.form$etamap),
+                               eta.diss=ergm.eta(theta.diss, model.diss$etamap)
+                               ){
 
 
   #
@@ -83,7 +137,7 @@ stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
   Clist.diss <- ergm.Cprepare(nw, model.diss)
   Clist.mon <- if(!is.null(model.mon)) Clist.mon <- ergm.Cprepare(nw, model.mon)
   
-  z <- stergm.getMCMCsample.slave(Clist.form, Clist.diss, Clist.mon, MHproposal.form, MHproposal.diss, eta.form, eta.diss, control, verbose)
+  z <- stergm_MCMC_slave(Clist.form, Clist.diss, Clist.mon, proposal.form, proposal.diss, eta.form, eta.diss, control, verbose)
 
   newnetwork<-newnw.extract(nw,z)
   if(is.durational(model.form) || is.durational(model.diss) || is.durational(model.mon)){
@@ -119,7 +173,22 @@ stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
        maxchanges=control$MCMC.maxchanges)
 }
 
-stergm.getMCMCsample.slave <- function(Clist.form, Clist.diss, Clist.mon, MHproposal.form, MHproposal.diss, eta.form, eta.diss, control, verbose){
+#' @include tergm-deprecated.R
+#' @describeIn tergm-deprecated Use [stergm_MCMC_slave()] instead.
+#' @export stergm.mcmcslave
+stergm.mcmcslave <- function(Clist.form, Clist.diss, Clist.mon, proposal.form, proposal.diss, eta.form, eta.diss, control, verbose){
+  .dep_once("stergm_MCMC_slave")
+  stergm_MCMC_slave(Clist.form, Clist.diss, Clist.mon, proposal.form, proposal.diss, eta.form, eta.diss, control, verbose)
+}
+
+#' @rdname stergm_MCMC_sample
+#' @description \code{stergm_MCMC_slave} is an even
+#'   lower-level function that actually calls the C code.
+#' @param Clist.form,Clist.diss,Clist.mon formation, dissolution, and
+#'   monitoring "Clist", as returned by \code{\link{ergm.Cprepare}}
+#' @useDynLib tergm
+#' @export
+stergm_MCMC_slave <- function(Clist.form, Clist.diss, Clist.mon, proposal.form, proposal.diss, eta.form, eta.diss, control, verbose){
   collect.form<-if(!is.null(control$collect.form)) control$collect.form else TRUE
   collect.diss<-if(!is.null(control$collect.diss)) control$collect.diss else TRUE
   maxedges <- control$MCMC.init.maxedges
@@ -139,13 +208,13 @@ stergm.getMCMCsample.slave <- function(Clist.form, Clist.diss, Clist.mon, MHprop
             as.integer(Clist.form$nterms), 
             as.character(Clist.form$fnamestring),
             as.character(Clist.form$snamestring),
-            as.character(MHproposal.form$name), as.character(MHproposal.form$pkgname),
+            as.character(proposal.form$name), as.character(proposal.form$pkgname),
             as.double(Clist.form$inputs), as.double(ergm:::.deinf(eta.form)),
             # Dissolution terms and proposals.
             as.integer(Clist.diss$nterms), 
             as.character(Clist.diss$fnamestring),
             as.character(Clist.diss$snamestring),
-            as.character(MHproposal.diss$name), as.character(MHproposal.diss$pkgname),
+            as.character(proposal.diss$name), as.character(proposal.diss$pkgname),
             as.double(Clist.diss$inputs), as.double(ergm:::.deinf(eta.diss)),
             # Monitored terms.
             if(!is.null(Clist.mon)) as.integer(Clist.mon$nterms) else as.integer(0), 
@@ -153,10 +222,10 @@ stergm.getMCMCsample.slave <- function(Clist.form, Clist.diss, Clist.mon, MHprop
             if(!is.null(Clist.mon)) as.character(Clist.mon$snamestring) else character(0),
             if(!is.null(Clist.mon)) as.double(Clist.mon$inputs) else double(0),
             # Degree bounds.
-            as.integer(MHproposal.form$arguments$constraints$bd$attribs), 
-            as.integer(MHproposal.form$arguments$constraints$bd$maxout), as.integer(MHproposal.form$arguments$constraints$bd$maxin),
-            as.integer(MHproposal.form$arguments$constraints$bd$minout), as.integer(MHproposal.form$arguments$constraints$bd$minin),
-            as.integer(MHproposal.form$arguments$constraints$bd$condAllDegExact), as.integer(length(MHproposal.form$arguments$constraints$bd$attribs)),
+            as.integer(proposal.form$arguments$constraints$bd$attribs), 
+            as.integer(proposal.form$arguments$constraints$bd$maxout), as.integer(proposal.form$arguments$constraints$bd$maxin),
+            as.integer(proposal.form$arguments$constraints$bd$minout), as.integer(proposal.form$arguments$constraints$bd$minin),
+            as.integer(proposal.form$arguments$constraints$bd$condAllDegExact), as.integer(length(proposal.form$arguments$constraints$bd$attribs)),
             # MCMC settings.
             as.integer(control$time.samplesize), as.integer(control$MCMC.burnin.min), as.integer(control$MCMC.burnin.max), as.double(control$MCMC.burnin.pval), as.double(control$MCMC.burnin.add),
             as.integer(control$time.burnin), as.integer(control$time.interval),

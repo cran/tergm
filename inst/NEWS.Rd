@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2008-2017 Statnet Commons
+%  Copyright 2008-2018 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=tergm-package]{tergm}} package}
@@ -61,6 +61,43 @@
   % }
 %% }
 
+
+
+\section{Changes in version 3.5.1}{
+    \subsection{NEW FEATURES}{
+      \itemize{
+	
+	\item Compatibility with \code{\link[=ergm:ergm-package]{ergm}}
+	3.9 API changes.
+	
+     }
+     
+   }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      
+      \item Documentation fixes.
+
+      \item A number of methods are no longer called directly but
+      through generics.
+      
+    }
+  }
+
+  \subsection{DEPRECATED & DEFUNCT}{
+    \itemize{
+      
+      \item \code{\link{stergm.getMCMCsample}} and
+      \code{\link{stergm.mcmcslave}} have been deprecatedin favor of
+      \code{\link{stergm_MCMC_sample}} and
+      \code{\link{stergm_MCMC_slave}}, respectively.
+
+    }
+  }
+}
+
+
 \section{Changes in version 3.4.1}{
     \subsection{NEW FEATURES}{
       \itemize{
@@ -78,9 +115,9 @@
 
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
-      By request from Sam Jennes,
-      \code{\link{stergm.getMCMCsample.slave}} has been split out of
-      \code{\link{stergm.getMCMCsample}} and exported.
+      \item By request from Sam Jennes,
+	\code{\link{stergm.getMCMCsample.slave}} has been split out of
+	\code{\link{stergm.getMCMCsample}} and exported.
     }
   }
 }

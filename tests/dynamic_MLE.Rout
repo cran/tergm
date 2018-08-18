@@ -1,0 +1,757 @@
+
+R Under development (unstable) (2018-08-16 r75159) -- "Unsuffered Consequences"
+Copyright (C) 2018 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #  File tests/dynamic_MLE.R in package tergm, part of the Statnet suite
+> #  of packages for network analysis, http://statnet.org .
+> #
+> #  This software is distributed under the GPL-3 license.  It is free,
+> #  open source, and has the attribution requirements (GPL Section 7) at
+> #  http://statnet.org/attribution
+> #
+> #  Copyright 2008-2018 Statnet Commons
+> #######################################################################
+> library(tergm)
+Loading required package: ergm
+Loading required package: network
+network: Classes for Relational Data
+Version 1.14-354 created on 2018-06-05.
+copyright (c) 2005, Carter T. Butts, University of California-Irvine
+                    Mark S. Handcock, University of California -- Los Angeles
+                    David R. Hunter, Penn State University
+                    Martina Morris, University of Washington
+                    Skye Bender-deMoll, University of Washington
+ For citation information, type citation("network").
+ Type help("network-package") to get started.
+
+Registered S3 method overwritten by 'dplyr':
+  method               from  
+  as.data.frame.tbl_df tibble
+
+ergm: version 3.9.4, created on 2018-08-15
+Copyright (c) 2018, Mark S. Handcock, University of California -- Los Angeles
+                    David R. Hunter, Penn State University
+                    Carter T. Butts, University of California -- Irvine
+                    Steven M. Goodreau, University of Washington
+                    Pavel N. Krivitsky, University of Wollongong
+                    Martina Morris, University of Washington
+                    with contributions from
+                    Li Wang
+                    Kirk Li, University of Washington
+                    Skye Bender-deMoll, University of Washington
+Based on "statnet" project software (statnet.org).
+For license and citation information see statnet.org/attribution
+or type citation("ergm").
+
+NOTE: Versions before 3.6.1 had a bug in the implementation of the bd()
+constriant which distorted the sampled distribution somewhat. In
+addition, Sampson's Monks datasets had mislabeled vertices. See the
+NEWS and the documentation for more details.
+
+Loading required package: networkDynamic
+
+networkDynamic: version 0.9.0, created on 2016-01-12
+Copyright (c) 2016, Carter T. Butts, University of California -- Irvine
+                    Ayn Leslie-Cook, University of Washington
+                    Pavel N. Krivitsky, University of Wollongong
+                    Skye Bender-deMoll, University of Washington
+                    with contributions from
+                    Zack Almquist, University of California -- Irvine
+                    David R. Hunter, Penn State University
+                    Li Wang
+                    Kirk Li, University of Washington
+                    Steven M. Goodreau, University of Washington
+                    Jeffrey Horner
+                    Martina Morris, University of Washington
+Based on "statnet" project software (statnet.org).
+For license and citation information see statnet.org/attribution
+or type citation("networkDynamic").
+
+
+tergm: version 3.6.0-1639, created on 2018-08-18
+Copyright (c) 2018, Pavel N. Krivitsky, University of Wollongong
+                    Mark S. Handcock, University of California -- Los Angeles
+                    with contributions from
+                    David R. Hunter, Penn State University
+                    Steven M. Goodreau, University of Washington
+                    Martina Morris, University of Washington
+                    Nicole Bohme Carnegie, New York University
+                    Carter T. Butts, University of California -- Irvine
+                    Ayn Leslie-Cook, University of Washington
+                    Skye Bender-deMoll
+                    Li Wang
+                    Kirk Li, University of Washington
+Based on "statnet" project software (statnet.org).
+For license and citation information see statnet.org/attribution
+or type citation("tergm").
+
+Warning messages:
+1: replacing previous import ‘ergm::sweep.mcmc.list’ by ‘statnet.common::sweep.mcmc.list’ when loading ‘tergm’ 
+2: replacing previous import ‘ergm::colMeans.mcmc.list’ by ‘statnet.common::colMeans.mcmc.list’ when loading ‘tergm’ 
+> 
+> tolerance<-0.05
+> n<-10
+> m<-6
+> theta<--1.5
+> 
+> logit<-function(p) log(p/(1-p))
+> 
+> form.mle<-function(y0,y1){
++   logit(network.edgecount(y1-y0,na.omit=TRUE)/(network.dyadcount(y1)-network.edgecount(y0-is.na(y1))))
++ }
+> 
+> diss.mle<-function(y0,y1){
++   -logit(network.edgecount(y0-y1,na.omit=TRUE)/(network.edgecount(y0-is.na(y1))))
++ }
+> 
+> do.run <- function(dir, bip=FALSE, prop.weights="default"){
++ if(bip){ # Extreme theta creates networks with too few ties to properly test.
++   theta <- theta/2
++ }
++   
++ y0<-network.initialize(n,dir=dir,bipartite=bip)
++ set.seed(321)
++ y0<-standardize.network(simulate(y0~edges, coef=theta, control=control.simulate(MCMC.burnin=n^2*2)))
++ 
++ cat("Complete data:\n")
++ 
++ set.seed(123)
++ y1<-standardize.network(simulate(y0~edges, coef=theta, control=control.simulate(MCMC.burnin=n^2*2)))
++ 
++ # Force CMPLE
++ set.seed(543)
++ fit<-stergm(list(y0,y1), formation=~edges, dissolution=~edges, estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
++ 
++ stopifnot(fit$estimate=="CMPLE", fit$formation.fit$estimate=="MPLE", fit$dissolution.fit$estimate=="MPLE")
++ stopifnot(all.equal(form.mle(y0,y1), coef(fit$formation.fit), tolerance=tolerance, check.attributes=FALSE))
++ stopifnot(all.equal(diss.mle(y0,y1), coef(fit$dissolution.fit), tolerance=tolerance, check.attributes=FALSE))
++ 
++ # Autodetected CMPLE
++ set.seed(543)
++ fit<-stergm(list(y0,y1), formation=~edges, dissolution=~edges, estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
++ 
++ stopifnot(fit$estimate=="CMLE", is.null(fit$formation.fit$sample), is.null(fit$dissolution.fit$sample))
++ stopifnot(all.equal(form.mle(y0,y1), coef(fit$formation.fit), tolerance=tolerance, check.attributes=FALSE))
++ stopifnot(all.equal(diss.mle(y0,y1), coef(fit$dissolution.fit), tolerance=tolerance, check.attributes=FALSE))
++ 
++ # Force CMLE
++ for(prop.weight in prop.weights){
++ cat("====",prop.weight,"====\n")
++ set.seed(543)
++ fit<-stergm(list(y0,y1), formation=~edges, dissolution=~edges, estimate="CMLE", control=control.stergm(CMLE.control=control.ergm(force.main=TRUE, MCMC.prop.weights=prop.weight)), times=c(1,2), eval.loglik=FALSE)
++ 
++ stopifnot(fit$estimate=="CMLE", fit$formation.fit$estimate=="MLE", fit$dissolution.fit$estimate=="MLE")
++ stopifnot(all.equal(form.mle(y0,y1), coef(fit$formation.fit), tolerance=tolerance, check.attributes=FALSE))
++ stopifnot(all.equal(diss.mle(y0,y1), coef(fit$dissolution.fit), tolerance=tolerance, check.attributes=FALSE))
++ }
++ 
++ cat("Missing data:\n")
++ 
++ y1m<-network.copy(y1)
++ set.seed(765)
++ e <- as.edgelist(y1)[1,]
++ y1m[e[1], e[2]] <- NA
++ y1m[1,m+1] <- NA
++ 
++ # Force CMPLE
++ set.seed(765)
++ fit<-stergm(list(y0,y1m), formation=~edges, dissolution=~edges, estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
++ 
++ stopifnot(fit$estimate=="CMPLE", fit$formation.fit$estimate=="MPLE", fit$dissolution.fit$estimate=="MPLE")
++ stopifnot(all.equal(form.mle(y0,y1m), coef(fit$formation.fit), tolerance=tolerance, check.attributes=FALSE))
++ stopifnot(all.equal(diss.mle(y0,y1m), coef(fit$dissolution.fit), tolerance=tolerance, check.attributes=FALSE))
++ 
++ # Autodetected CMPLE
++ set.seed(765)
++ fit<-stergm(list(y0,y1m), formation=~edges, dissolution=~edges, estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
++ 
++ stopifnot(fit$estimate=="CMLE", is.null(fit$formation.fit$sample), is.null(fit$dissolution.fit$sample))
++ stopifnot(all.equal(form.mle(y0,y1m), coef(fit$formation.fit), tolerance=tolerance, check.attributes=FALSE))
++ stopifnot(all.equal(diss.mle(y0,y1m), coef(fit$dissolution.fit), tolerance=tolerance, check.attributes=FALSE))
++ 
++ # Force CMLE
++ for(prop.weight in prop.weights){
++ cat("====",prop.weight,"====\n")
++ set.seed(234)
++ fit<-stergm(list(y0,y1m), formation=~edges, dissolution=~edges, estimate="CMLE", control=control.stergm(CMLE.control=control.ergm(force.main=TRUE, MCMC.prop.weights=prop.weight)), times=c(1,2), eval.loglik=FALSE)
++ 
++ stopifnot(fit$estimate=="CMLE", fit$formation.fit$estimate=="MLE", fit$dissolution.fit$estimate=="MLE")
++ stopifnot(all.equal(form.mle(y0,y1m), coef(fit$formation.fit), tolerance=tolerance, check.attributes=FALSE))
++ stopifnot(all.equal(diss.mle(y0,y1m), coef(fit$dissolution.fit), tolerance=tolerance, check.attributes=FALSE))
++ }
++ }
+> 
+> cat("=========== Directed test ===========\n")
+=========== Directed test ===========
+> do.run(TRUE, prop.weights=c("default","random"))
+Complete data:
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+==== default ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0001076.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0003701.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+==== random ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.002936.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.005812.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0001498.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0001222.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Missing data:
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+==== default ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0003575.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0003402.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0007831.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.000963.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+==== random ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0004445.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0005703.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+> cat("=========== Undirected test ===========\n")
+=========== Undirected test ===========
+> do.run(FALSE, prop.weights=c("default","random"))
+Complete data:
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+==== default ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0002258.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0008077.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0008741.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+==== random ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0005057.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0004191.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Missing data:
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+==== default ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0001954.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0002175.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0002554.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0005085.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+==== random ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.001253.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.001838.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0001665.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0001212.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+> cat("=========== Undirected bipartite test ===========\n")
+=========== Undirected bipartite test ===========
+> do.run(FALSE, m, prop.weights=c("default","random"))
+Complete data:
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+==== default ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0004704.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.001268.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0003133.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0006687.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+==== random ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0009567.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.001132.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.001853.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Missing data:
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Stopping at the initial estimate.
+==== default ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0001556.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by < 0.0001.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+==== random ====
+Fitting formation...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0005825.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.0006879.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+Fitting dissolution...
+Starting maximum pseudolikelihood estimation (MPLE):
+Evaluating the predictor and response matrix.
+Maximizing the pseudolikelihood.
+Finished MPLE.
+Starting Monte Carlo maximum likelihood estimation (MCMLE):
+Iteration 1 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.001589.
+Step length converged once. Increasing MCMC sample size.
+Iteration 2 of at most 20:
+Optimizing with step length 1.
+The log-likelihood improved by 0.003732.
+Step length converged twice. Stopping.
+Finished MCMLE.
+This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function.
+> 
+> proc.time()
+   user  system elapsed 
+ 29.338   0.073  29.417 
