@@ -1,11 +1,11 @@
 #  File R/stergm.getMCMCsample.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2008-2018 Statnet Commons
+#  Copyright 2008-2019 Statnet Commons
 #######################################################################
 ############################################################################
 # The <stergm.getMCMCsample> function collects a sample of networks and
@@ -75,7 +75,7 @@
 stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
                                  proposal.form, proposal.diss, eta.form, eta.diss, control, 
                                  verbose, ...){
-  .dep_once("stergm_MCMC_sample")
+  .Deprecated("stergm_MCMC_sample")
   out <- stergm_MCMC_sample(nw, model.form, model.diss, model.mon,
                             proposal.form, proposal.diss,  control=control,
                             eta.form=eta.form, eta.diss=eta.diss, verbose=verbose, ...)
@@ -139,7 +139,7 @@ stergm_MCMC_sample <- function(nw, model.form, model.diss, model.mon,
   
   z <- stergm_MCMC_slave(Clist.form, Clist.diss, Clist.mon, proposal.form, proposal.diss, eta.form, eta.diss, control, verbose)
 
-  newnetwork<-newnw.extract(nw,z)
+  newnetwork<-as.network(pending_update_network(nw, z))
   if(is.durational(model.form) || is.durational(model.diss) || is.durational(model.mon)){
     newnetwork %n% "time" <- z$time
     newnetwork %n% "lasttoggle" <- z$lasttoggle
@@ -177,7 +177,7 @@ stergm_MCMC_sample <- function(nw, model.form, model.diss, model.mon,
 #' @describeIn tergm-deprecated Use [stergm_MCMC_slave()] instead.
 #' @export stergm.mcmcslave
 stergm.mcmcslave <- function(Clist.form, Clist.diss, Clist.mon, proposal.form, proposal.diss, eta.form, eta.diss, control, verbose){
-  .dep_once("stergm_MCMC_slave")
+  .Deprecated("stergm_MCMC_slave")
   stergm_MCMC_slave(Clist.form, Clist.diss, Clist.mon, proposal.form, proposal.diss, eta.form, eta.diss, control, verbose)
 }
 

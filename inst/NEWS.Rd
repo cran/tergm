@@ -1,11 +1,11 @@
 %  File inst/NEWS.Rd in package tergm, part of the Statnet suite
-%  of packages for network analysis, http://statnet.org .
+%  of packages for network analysis, https://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) at
-%  http://statnet.org/attribution
+%  https://statnet.org/attribution
 %
-%  Copyright 2008-2018 Statnet Commons
+%  Copyright 2008-2019 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=tergm-package]{tergm}} package}
@@ -61,9 +61,33 @@
   % }
 %% }
 
+\section{Changes in version 3.6.0}{
+    \subsection{NEW FEATURES}{
+     \itemize{
+	
+       \item Compatibility with \code{\link[=ergm:ergm-package]{ergm}} 3.10 API changes.
+       
+       \item Optimizations to make use of \code{\link[=ergm:ergm-package]{ergm}} 3.10 APIs and parallel facilities.
+
+       \item Improved utilization of \code{\link[ergm]{san}}.
+
+       \item \code{\link{stergm}}'s \code{eval.loglik=} argument's default can now be controlled by a \code{\link{options}}-style option.
+
+     }
+     
+   }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+
+      \item Miscellaneous compiler warnings fixed.
+      
+    }
+  }
+}
 
 
-\section{Changes in version 3.5.1}{
+\section{Changes in version 3.5.2}{
     \subsection{NEW FEATURES}{
       \itemize{
 	

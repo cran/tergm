@@ -1,11 +1,11 @@
 #  File R/simulate.stergm.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2008-2018 Statnet Commons
+#  Copyright 2008-2019 Statnet Commons
 #######################################################################
 #========================================================================
 # This file contains the following 3 functions for simulating stergms
@@ -311,8 +311,7 @@
 #' # "Resume" the simulation.
 #' dynsim2<-simulate(dynsim,time.slices=S,verbose=TRUE)
 #' @importFrom stats simulate
-#' @S3method simulate stergm
-#' @export simulate.stergm
+#' @export
 simulate.stergm<-function(object, nsim=1, seed=NULL,
                           coef.form=object$formation.fit$coef,coef.diss=object$dissolution.fit$coef,
                           constraints = object$constraints,
@@ -326,7 +325,6 @@ simulate.stergm<-function(object, nsim=1, seed=NULL,
                           stats.diss = FALSE,
                           duration.dependent = NULL,
                           verbose=FALSE, ...){
-  .dep_method("simulate","stergm")
   check.control.class(c("simulate.stergm","simulate.network"), "simulate.stergm")
   
   control.transfer <- list(MCMC.prop.weights="MCMC.prop.weights",
@@ -371,8 +369,7 @@ simulate.stergm<-function(object, nsim=1, seed=NULL,
 
 
 #' @rdname simulate.stergm
-#' @S3method simulate network
-#' @export simulate.network
+#' @export
 simulate.network <- function(object, nsim=1, seed=NULL,
                              formation, dissolution,
                              coef.form,coef.diss,
@@ -386,7 +383,6 @@ simulate.network <- function(object, nsim=1, seed=NULL,
                              stats.diss = FALSE,
                              duration.dependent=NULL,
                              verbose=FALSE,...) {
-  .dep_method("simulate","network")
   if(length(list(...))) stop("Unknown arguments: ",names(list(...)))
   check.control.class("simulate.network", "STERGM simulate.network")
 
@@ -446,13 +442,13 @@ simulate.network <- function(object, nsim=1, seed=NULL,
 
 
 
-  model.form <- ergm_model(formation, nw, role="formation")
+  model.form <- ergm_model(formation, nw, role="formation", term.options=control$term.options)
   if(!missing(coef.form) && nparam(model.form)!=length(coef.form)) stop("coef.form has ", length(coef.form), " elements, while the model requires ",nparam(model.form)," parameters.")
 
-  model.diss <- ergm_model(dissolution, nw, role="dissolution")
+  model.diss <- ergm_model(dissolution, nw, role="dissolution", term.options=control$term.options)
   if(!missing(coef.diss) && nparam(model.diss)!=length(coef.diss)) stop("coef.diss has ", length(coef.diss), " elements, while the model requires ",nparam(model.diss)," parameters.")
 
-  model.mon <- if(!is.null(monitor)) ergm_model(monitor, nw, role="target") else NULL
+  model.mon <- if(!is.null(monitor)) ergm_model(monitor, nw, role="target", term.options=control$term.options) else NULL
   
   if(missing(coef.form)) {
     coef.form <- rep(0,nparam(model.form, canonical=TRUE))
@@ -602,8 +598,7 @@ simulate.network <- function(object, nsim=1, seed=NULL,
   }
 }
 #' @rdname simulate.stergm
-#' @S3method simulate networkDynamic
-#' @export simulate.networkDynamic
+#' @export
 simulate.networkDynamic <- function(object, nsim=1, seed=NULL,
                                     formation = attr(object, "formation"), dissolution = attr(object, "dissolution"),
                                     coef.form = attr(object, "coef.form"), coef.diss = attr(object, "coef.diss"),
@@ -617,7 +612,6 @@ simulate.networkDynamic <- function(object, nsim=1, seed=NULL,
                                     stats.diss = FALSE,
                                     duration.dependent = NULL,
                                     verbose=FALSE, ...){
-  .dep_method("simulate","networkDynamic")
   
   if(nsim>1) stop("Simulating more than one chain of networks is not supported at this time. If you want to simulate over multiple time steps, use the time.slices argument.")
 
