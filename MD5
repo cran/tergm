@@ -1,4 +1,4 @@
-5bf2b97fdc62b8cd9e40ec24c71fc54f *DESCRIPTION
+ce586306c49645cdea4e11bb6db5fd53 *DESCRIPTION
 da37c66c3de9da7447a9f4bd2b16a1d3 *LICENSE
 b0003b5f1e483cff3bc5cf441693c6be *NAMESPACE
 e4a0669c30ef8eb6bc5bc33bda3f88e4 *R/InitConstraint.R
@@ -33,11 +33,11 @@ a3d06b939b04b4612a5a1ee1daeabb75 *R/stergm.utils.R
 16293ea4fb404e5e90bf80f8993f5828 *R/zzz.R
 ef1daaed8fc2688148e3dea3e600a16f *README.md
 4e160898a70136f81f15966699cbf755 *build/vignette.rds
-d72869caa117e2c20e137045c44cbfdb *inst/CITATION
-e5a0f473de84998f2a558e24dc4fb7e1 *inst/NEWS.Rd
+b290f2a44e181b8cdf53eadfeb03fbae *inst/CITATION
+149f1caafa82370b2da1b33766342178 *inst/NEWS.Rd
 0edeb87d73b408e728faaf83f0072a3c *inst/doc/STERGM.R
 d092622d0dc89b90c157c143883a34b0 *inst/doc/STERGM.Rnw
-3c5b429cda0b3594e61a083e9bdaee94 *inst/doc/STERGM.pdf
+c2b1176b5dadf5ee71ff36cf12deb20c *inst/doc/STERGM.pdf
 4ab7ca2c279983a876d6c036eacce524 *man/control.simulate.stergm.Rd
 79ab400878e0d36edd415eac15066754 *man/control.stergm.Rd
 a99193df7f82bf421fa978b3a8befe7b *man/control.tergm.godfather.Rd
