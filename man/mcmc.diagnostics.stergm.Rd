@@ -4,8 +4,7 @@
 \alias{mcmc.diagnostics.stergm}
 \title{Conduct MCMC diagnostics on an ergm or stergm fit}
 \usage{
-\method{mcmc.diagnostics}{stergm}(object, center = TRUE, esteq = TRUE,
-  vars.per.page = 3, ...)
+\method{mcmc.diagnostics}{stergm}(object, center = TRUE, esteq = TRUE, vars.per.page = 3, ...)
 }
 \arguments{
 \item{object}{A stergm object.  See documentation for
@@ -46,7 +45,7 @@ run as component \code{$sample}.  This matrix is actually an object of class
 \code{mcmc} and can be used directly in the \code{coda} package to assess
 MCMC convergence. \emph{Hence all MCMC diagnostic methods available in
 \code{coda} are available directly.} See the examples and
-\url{http://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/coda-readme/}.
+\url{https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/coda-readme/}.
 
 More information can be found by looking at the documentation of
 \code{\link{stergm}}.

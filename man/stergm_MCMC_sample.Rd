@@ -6,13 +6,33 @@
 \title{Collects a sample of networks and returns the formation and dissolution
 statistics of each sample}
 \usage{
-stergm_MCMC_sample(nw, model.form, model.diss, model.mon, proposal.form,
-  proposal.diss, control, theta.form = NULL, theta.diss = NULL,
-  verbose = FALSE, ..., eta.form = ergm.eta(theta.form,
-  model.form$etamap), eta.diss = ergm.eta(theta.diss, model.diss$etamap))
+stergm_MCMC_sample(
+  nw,
+  model.form,
+  model.diss,
+  model.mon,
+  proposal.form,
+  proposal.diss,
+  control,
+  theta.form = NULL,
+  theta.diss = NULL,
+  verbose = FALSE,
+  ...,
+  eta.form = ergm.eta(theta.form, model.form$etamap),
+  eta.diss = ergm.eta(theta.diss, model.diss$etamap)
+)
 
-stergm_MCMC_slave(Clist.form, Clist.diss, Clist.mon, proposal.form,
-  proposal.diss, eta.form, eta.diss, control, verbose)
+stergm_MCMC_slave(
+  Clist.form,
+  Clist.diss,
+  Clist.mon,
+  proposal.form,
+  proposal.diss,
+  eta.form,
+  eta.diss,
+  control,
+  verbose
+)
 }
 \arguments{
 \item{nw}{a \code{\link{network}} object}
@@ -37,7 +57,7 @@ monitoring "Clist", as returned by \code{\link{ergm.Cprepare}}}
 returns the MCMC sample as a list containing: \itemize{
 \item statsmatrix.form: the matrix of sampled statistics for 'model.form'
 RELATIVE TO INITIAL NETWORK \item statsmatrix.diss: the matrix of sampled
-statistics for 'model.form' RELATIVE TO INITIAL NETWORK
+statistics for 'model.diss' RELATIVE TO INITIAL NETWORK
 \item statsmatrix.mon: the matrix of sampled statistics for 'model.mon'
 RELATIVE TO INITIAL NETWORK \item newnetwork : the final network from the
 sampling process \item changed : a toggle matrix, where the first column is

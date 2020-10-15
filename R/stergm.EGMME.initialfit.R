@@ -5,9 +5,9 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2008-2019 Statnet Commons
+#  Copyright 2008-2020 Statnet Commons
 #######################################################################
-stergm.EGMME.initialfit<-function(init.form, init.diss, nw, model.form, model.diss, model.mon, control, verbose=FALSE){
+stergm.EGMME.initialfit<-function(formation, dissolution, targets, init.form, init.diss, nw, model.form, model.diss, model.mon, control, verbose=FALSE){
 
   # Remove offset() from coefficient names.
   .do <- function(x) sub('offset\\((.+)\\)', '\\1', x)
@@ -27,7 +27,7 @@ stergm.EGMME.initialfit<-function(init.form, init.diss, nw, model.form, model.di
                 )
            && all(.do(model.diss$coef.names) %in% model.form$coef.names)
            && is.dyad.independent(model.diss)){
-    if(verbose) cat("Formation statistics are analogous to targeted statistics, dissolution is fixed or is edges with a mean.age target, dissolution terms appear to have formation analogs, and dissolution process is dyad-independent, so using edges dissolution approximation  (Carnegie et al.).\n")
+    if(verbose) message("Formation statistics are analogous to targeted statistics, dissolution is fixed or is edges with a mean.age target, dissolution terms appear to have formation analogs, and dissolution process is dyad-independent, so using edges dissolution approximation  (Carnegie et al.).")
 
     if(!all(model.diss$etamap$offsettheta)){ # This must mean that the two provisos above are satisfied.
       mean.age <- model.mon$target.stats[.do(model.mon$coef.names)=="mean.age"]
@@ -38,7 +38,7 @@ stergm.EGMME.initialfit<-function(init.form, init.diss, nw, model.form, model.di
     # Fit an ERGM to the formation terms:
     form.targets <- model.mon$target.stats[match(model.form$coef.names,.do(model.mon$coef.names))]
     form.targets <- form.targets[!model.form$etamap$offsettheta]
-    init.form<-coef(ergm(model.form$formula,control=control.ergm(init=init.form), target.stats=form.targets, eval.loglik=FALSE))
+    init.form<-coef(ergm(formation,control=control.ergm(init=init.form), target.stats=form.targets, eval.loglik=FALSE))
     # Now, match up non-offset formation terms with dissolution terms.
     # In case it's not obvious (it's not to me) what the following
     # does, it takes non-offset elements of init.form, then, from
@@ -52,7 +52,7 @@ stergm.EGMME.initialfit<-function(init.form, init.diss, nw, model.form, model.di
   }else{
     stop("No initial parameter method for specified model and targets combination is implemented. Specify via control$init.form and control$init.diss .")
   }
-  out <- list(formation = model.form$formula, dissolution = model.diss$formula, targets = model.mon$formula, target.stats=model.mon$target.stats, nw = nw, control = control, formation.fit = list(coef=init.form, etamap = model.form$etamap), dissolution.fit = list(coef=init.diss, etamap = model.diss$etamap))
+  out <- list(formation = formation, dissolution = dissolution, targets = targets, target.stats=model.mon$target.stats, nw = nw, control = control, formation.fit = list(coef=init.form, etamap = model.form$etamap), dissolution.fit = list(coef=init.diss, etamap = model.diss$etamap))
   class(out)<-"stergm"
   out
 }

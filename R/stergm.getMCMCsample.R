@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2008-2019 Statnet Commons
+#  Copyright 2008-2020 Statnet Commons
 #######################################################################
 ############################################################################
 # The <stergm.getMCMCsample> function collects a sample of networks and
@@ -110,7 +110,7 @@ stergm.getMCMCsample <- function(nw, model.form, model.diss, model.mon,
 #' @return returns the MCMC sample as a list containing: \itemize{
 #' \item statsmatrix.form: the matrix of sampled statistics for 'model.form'
 #' RELATIVE TO INITIAL NETWORK \item statsmatrix.diss: the matrix of sampled
-#' statistics for 'model.form' RELATIVE TO INITIAL NETWORK
+#' statistics for 'model.diss' RELATIVE TO INITIAL NETWORK
 #' \item statsmatrix.mon: the matrix of sampled statistics for 'model.mon'
 #' RELATIVE TO INITIAL NETWORK \item newnetwork : the final network from the
 #' sampling process \item changed : a toggle matrix, where the first column is
@@ -193,6 +193,9 @@ stergm_MCMC_slave <- function(Clist.form, Clist.diss, Clist.mon, proposal.form, 
   collect.diss<-if(!is.null(control$collect.diss)) control$collect.diss else TRUE
   maxedges <- control$MCMC.init.maxedges
   maxchanges <- control$MCMC.init.maxchanges
+  
+  lasttoggle_flag <- as.integer(!is.null(NVL(Clist.form$lasttoggle,Clist.diss$lasttoggle,Clist.mon$lasttoggle)))
+  
   repeat{
     #FIXME: Separate MCMC control parameters and properly attach them.
     
@@ -200,7 +203,8 @@ stergm_MCMC_slave <- function(Clist.form, Clist.diss, Clist.mon, proposal.form, 
             # Observed network.
             as.integer(Clist.form$tails), as.integer(Clist.form$heads),
             time = if(is.null(Clist.form$time)) as.integer(0) else as.integer(Clist.form$time),
-            lasttoggle = as.integer(NVL(Clist.form$lasttoggle,Clist.diss$lasttoggle,Clist.mon$lasttoggle,0)),  
+            lasttoggle_flag,
+            lasttoggle = as.integer(NVL(Clist.form$lasttoggle,Clist.diss$lasttoggle,Clist.mon$lasttoggle)),  
             as.integer(Clist.form$nedges),
             as.integer(Clist.form$n),
             as.integer(Clist.form$dir), as.integer(Clist.form$bipartite),
@@ -209,13 +213,13 @@ stergm_MCMC_slave <- function(Clist.form, Clist.diss, Clist.mon, proposal.form, 
             as.character(Clist.form$fnamestring),
             as.character(Clist.form$snamestring),
             as.character(proposal.form$name), as.character(proposal.form$pkgname),
-            as.double(Clist.form$inputs), as.double(ergm:::.deinf(eta.form)),
+            as.double(Clist.form$inputs), as.double(deInf(eta.form)),
             # Dissolution terms and proposals.
             as.integer(Clist.diss$nterms), 
             as.character(Clist.diss$fnamestring),
             as.character(Clist.diss$snamestring),
             as.character(proposal.diss$name), as.character(proposal.diss$pkgname),
-            as.double(Clist.diss$inputs), as.double(ergm:::.deinf(eta.diss)),
+            as.double(Clist.diss$inputs), as.double(deInf(eta.diss)),
             # Monitored terms.
             if(!is.null(Clist.mon)) as.integer(Clist.mon$nterms) else as.integer(0), 
             if(!is.null(Clist.mon)) as.character(Clist.mon$fnamestring) else character(0),
@@ -279,9 +283,10 @@ stergm_MCMC_slave <- function(Clist.form, Clist.diss, Clist.mon, proposal.form, 
       NULL
 
   # Blank all elements of z that we don't want to bother returning.
+  # note that we want z$lasttoggle to be NULL if lasttoggle_flag is FALSE
   zn <- names(z)
   for(i in rev(seq_along(zn))){ # Do in reverse, to preserve indexing.
-    if(! zn[i] %in% c("time", "lasttoggle", "newnwtails", "newnwheads", "diffnwtime", "diffnwtails", "diffnwheads", "diffnwdirs", "status"))
+    if(! zn[i] %in% c("time", if(lasttoggle_flag) "lasttoggle", "newnwtails", "newnwheads", "diffnwtime", "diffnwtails", "diffnwheads", "diffnwdirs", "status"))
       z[[i]] <- NULL
   }  
   c(z,

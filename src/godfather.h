@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2008-2019 Statnet Commons
+ *  Copyright 2008-2020 Statnet Commons
  */
 #ifndef godfather_H 
 #define godfather_H
@@ -15,7 +15,7 @@
 #include "MCMCDyn.h"
 
 /* Function prototypes */
-void godfather_wrapper(int *tails, int *heads, int *time, int *lasttoggle, int *n_edges,
+void godfather_wrapper(int *tails, int *heads, int *time, int *lasttoggle_flag, int *lasttoggle, int *n_edges,
 		       int *n_nodes, int *directed_flag, int *bip, 
 		       int *nterms, char **funnames, char **sonames, double *inputs,
 		       int *total_toggles, int *toggletimes, 

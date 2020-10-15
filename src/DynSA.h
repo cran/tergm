@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2008-2019 Statnet Commons
+ *  Copyright 2008-2020 Statnet Commons
  */
 #ifndef DYNSA_H
 #define DYNSA_H
@@ -14,7 +14,7 @@
 #include "MHproposal.h"
 
 void MCMCDynSArun_wrapper(// Observed network.
-			     int *tails, int *heads, int *time, int *lasttoggle, int *n_edges,
+			     int *tails, int *heads, int *time, int *lasttoggle_flag, int *lasttoggle, int *n_edges,
 			     int *n_nodes, int *dflag, int *bipartite, 
 			     // Formation terms and proposals.
 			     int *F_nterms, char **F_funnames, char **F_sonames,

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2008-2019 Statnet Commons
+#  Copyright 2008-2020 Statnet Commons
 #######################################################################
 ################################################################################
 # stergm --- fit Separable Temporal ERGMs.
@@ -24,9 +24,7 @@
 #' \item For a brief demonstration, please see the tergm package vignette:
 #' \code{browseVignettes(package='tergm')} \item A more detailed tutorial is
 #' avalible on the statnet wiki:
-#' \url{http://statnet.csde.washington.edu/workshops/SUNBELT/current/tergm/tergm_tutorial.pdf}
-#' \item For more usage examples, see the wiki page at
-#' \url{https://statnet.csde.washington.edu/trac/wiki/tergmUsage} }
+#' \url{https://statnet.org/Workshops/tergm_tutorial.html} }
 #' 
 #' @param nw A \code{\link[network]{network}} object (for EGMME); or
 #' \code{\link[networkDynamic]{networkDynamic}} object, a
@@ -134,13 +132,14 @@
 #' \code{\link{summary.stergm}} returns a summary of the relevant parts of the
 #' \code{\link{stergm}} object in concise summary format.
 #' @seealso ergm, network, \%v\%, \%n\%, \code{\link{ergm-terms}}
-#' @references \itemize{ \item Krivitsky PN, Handcock MS (2010). A Separable
-#' Model for Dynamic Networks. \url{http://arxiv.org/abs/1011.1937}
+#' @references \itemize{
+#'
+#' \item Krivitsky P.N. and Handcock M.S. (2014) A Separable Model for Dynamic Networks. \emph{Journal of the Royal Statistical Society, Series B}, 76(1): 29-46. \doi{10.1111/rssb.12014}
 #' 
 #' \item Krivitsky, P.N. (2012). Modeling of Dynamic Networks based on
 #' Egocentric Data with Durational Information. \emph{Pennsylvania State
 #' University Department of Statistics Technical Report}, 2012(2012-01).
-#' \url{http://stat.psu.edu/research/technical-report-files/2012-technical-reports/modeling-of-dynamic-networks-based-on-egocentric-data-with-durational-information}
+#' \url{https://web.archive.org/web/20170830053722/https://stat.psu.edu/research/technical-report-files/2012-technical-reports/TR1201A.pdf}
 #' 
 #' }
 #' @examples
