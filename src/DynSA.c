@@ -1,236 +1,226 @@
-/*  File src/DynSA.c in package tergm, part of the Statnet suite
- *  of packages for network analysis, https://statnet.org .
+/*  File src/DynSA.c in package tergm, part of the
+ *  Statnet suite of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  https://statnet.org/attribution
+ *  https://statnet.org/attribution .
  *
- *  Copyright 2008-2020 Statnet Commons
+ *  Copyright 2008-2021 Statnet Commons
  */
 #include "DynSA.h"
+#include "changestats_lasttoggle.h"
 
-void MCMCDynSArun_wrapper(// Observed network.
-			     int *tails, int *heads, int *time, int *lasttoggle_flag, int *lasttoggle, int *n_edges,
-			     int *n_nodes, int *dflag, int *bipartite, 
-			     // Formation terms and proposals.
-			     int *F_nterms, char **F_funnames, char **F_sonames,
-			     char **F_MHProposaltype, char **F_MHProposalpackage,
-			     double *F_inputs, 
-			     // Dissolution terms and proposals.
-			     int *D_nterms, char **D_funnames, char **D_sonames, 
-			     char **D_MHProposaltype, char **D_MHProposalpackage,
-			     double *D_inputs,
-			     // Parameter fittig.
-			     double *eta0, 
-			     int *M_nterms, char **M_funnames, char **M_sonames, double *M_inputs,
-			     double *init_dev,
-			     int *runlength,
-			     double *WinvGradient,
-			     double *jitter, double *dejitter,
-			     double *dev_guard,
-			     double *par_guard,
-			     // Degree bounds.
-			     int *attribs, int *maxout, int *maxin, int *minout,
-			     int *minin, int *condAllDegExact, int *attriblength,
-			     // MCMC settings.
-			     int *SA_burnin, int *SA_interval, int *min_MH_interval, int *max_MH_interval, double *MH_pval, double *MH_interval_add,
-			     // Space for output.
-			     int *maxedges, int *maxchanges,
-			     int *newnetworktail, int *newnetworkhead, 
-			     double *opt_history,
-			     // Verbosity.
-			     int *fVerbose,
-			     int *status){
+SEXP MCMCDynSArun_wrapper(SEXP stateR,
+                 SEXP nstatsmonitor,
+                 SEXP eta0,
+                 SEXP init_dev,
+                 SEXP runlength,
+                 SEXP WinvGradient,
+                 SEXP jitter,
+                 SEXP dejitter,
+                 SEXP dev_guard,
+                 SEXP par_guard,
+                 // MCMC settings.
+                 SEXP SA_burnin, 
+                 SEXP SA_interval,
+                 SEXP min_MH_interval,
+                 SEXP max_MH_interval,
+                 SEXP MH_pval, 
+                 SEXP MH_interval_add,
+                 SEXP maxedges,
+                 SEXP maxchanges,
+                 SEXP verbose){    
+  GetRNGstate();  /* R function enabling uniform RNG */
+  ErgmState *s = ErgmStateInit(stateR, 0);
 
-  Network *nwp;
-  Model *F_m, *D_m, *M_m;
-  MHProposal *F_MH, *D_MH;
+  Model *m = s->m;
+  MHProposal *MHp = s->MHp;
+
+  /* Each ModelTerm in termarray has an aux_storage pointer,
+     regardless of whether it asked for one; and the index of the
+     lasttoggle auxiliary is in model$slots.extra.aux$system . Once we
+     grab that, cast it to the lasttoggle data structure and extract
+     the discord hashtable. */
+  StoreTimeAndLasttoggle *dur_inf = (StoreTimeAndLasttoggle *)m->termarray->aux_storage[asInteger(getListElement(getListElement(m->R, "slots.extra.aux"), "system"))];
+
+  double *inputdev = R_calloc(m->n_stats, double);
+  memcpy(inputdev + m->n_stats - asInteger(nstatsmonitor), REAL(init_dev), asInteger(nstatsmonitor)*sizeof(double));
   
-  if(!*lasttoggle_flag) lasttoggle = NULL;
-
-  Vertex *difftime, *difftail, *diffhead;
-  difftime = (Vertex *) Calloc(*maxchanges,Vertex);
-  difftail = (Vertex *) Calloc(*maxchanges,Vertex);
-  diffhead = (Vertex *) Calloc(*maxchanges,Vertex);
-
-  memset(newnetworktail,0,*maxedges*sizeof(int));
-  memset(newnetworkhead,0,*maxedges*sizeof(int));
-
-  MCMCDyn_init_common(tails, heads, *time, lasttoggle, *n_edges,
-		      *n_nodes, *dflag, *bipartite, &nwp,
-		      *F_nterms, *F_funnames, *F_sonames, F_inputs, &F_m,
-		      *D_nterms, *D_funnames, *D_sonames, D_inputs, &D_m,
-		      *M_nterms, *M_funnames, *M_sonames, M_inputs, &M_m,
-		      attribs, maxout, maxin, minout,
-		      minin, *condAllDegExact, *attriblength,
-		      *F_MHProposaltype, *F_MHProposalpackage, &F_MH,
-		      *D_MHProposaltype, *D_MHProposalpackage, &D_MH,
-		      *fVerbose);
-
-  *status = MCMCDynSArun(nwp,
-			    
-			 F_m, F_MH,
-			 D_m, D_MH,
-			 
-			 eta0, M_m,
-			 init_dev, 
-			 *runlength,
-			 WinvGradient, jitter, dejitter, dev_guard, par_guard,
-			 
-			 *maxedges, *maxchanges,
-			 difftime, difftail, diffhead,
-			 opt_history,
-			 
-			 *SA_burnin, *SA_interval, *min_MH_interval, *max_MH_interval, *MH_pval, *MH_interval_add,
-			 *fVerbose);
+  SEXP opt_history = PROTECT(allocVector(REALSXP, (2*m->n_stats - asInteger(nstatsmonitor))*asInteger(runlength)*asInteger(SA_interval)));
+  memset(REAL(opt_history), 0, (2*m->n_stats - asInteger(nstatsmonitor))*asInteger(runlength)*asInteger(SA_interval));
   
-  /* record the final network to pass back to R */
-
-  if(*status==MCMCDyn_OK){
-    newnetworktail[0]=newnetworkhead[0]=EdgeTree2EdgeList((Vertex*)newnetworktail+1,(Vertex*)newnetworkhead+1,nwp,*maxedges);
-    *time = nwp->duration_info.time;
-    if(nwp->duration_info.lasttoggle)
-    memcpy(lasttoggle, nwp->duration_info.lasttoggle, sizeof(int)*DYADCOUNT(*n_nodes, *bipartite, *dflag));
+  SEXP eta = PROTECT(allocVector(REALSXP, m->n_stats));
+  memcpy(REAL(eta), REAL(eta0), m->n_stats*sizeof(double));
+  
+  SEXP status;
+  if(MHp) status = PROTECT(ScalarInteger(MCMCDynSArun(s,
+             dur_inf,
+  
+             asInteger(nstatsmonitor),
+    
+             REAL(eta),
+             inputdev, 
+             asInteger(runlength),
+             REAL(WinvGradient), REAL(jitter), REAL(dejitter), REAL(dev_guard), REAL(par_guard),
+             
+             asInteger(maxedges), asInteger(maxchanges),
+             REAL(opt_history),
+             
+             asInteger(SA_burnin), asInteger(SA_interval), asInteger(min_MH_interval), asInteger(max_MH_interval), asReal(MH_pval), asReal(MH_interval_add),
+             asInteger(verbose))));
+  else status = PROTECT(ScalarInteger(MCMCDyn_MH_FAILED));
+  
+  SEXP nw_diff = PROTECT(allocVector(REALSXP, asInteger(nstatsmonitor)));
+  memcpy(REAL(nw_diff), inputdev + m->n_stats - asInteger(nstatsmonitor), asInteger(nstatsmonitor)*sizeof(double));
+  
+  const char *outn[] = {"status", "opt.history", "state", "eta", "nw.diff", ""};
+  SEXP outl = PROTECT(mkNamed(VECSXP, outn));
+  SET_VECTOR_ELT(outl, 0, status);
+  SET_VECTOR_ELT(outl, 1, opt_history);
+  
+  /* record new generated network to pass back to R */
+  if(asInteger(status) == MCMCDyn_OK){
+    SET_VECTOR_ELT(outl, 2, ErgmStateRSave(s));
   }
+  
+  SET_VECTOR_ELT(outl, 3, eta);
+  SET_VECTOR_ELT(outl, 4, nw_diff);
 
-  MCMCDyn_finish_common(nwp, F_m, D_m, M_m, F_MH, D_MH);
-  Free(difftime);
-  Free(difftail);
-  Free(diffhead);
+  ErgmStateDestroy(s);  
+  PutRNGstate();  /* Disable RNG before returning */
+  UNPROTECT(5);
+  return outl;
 }
 
 
 /*********************
  void MCMCSampleDynPhase12
 *********************/
-MCMCDynStatus MCMCDynSArun(// Observed and discordant network.
-			      Network *nwp,
-			      // Formation terms and proposals.
-			      Model *F_m, MHProposal *F_MH,
-			      // Dissolution terms and proposals.
-			      Model *D_m, MHProposal *D_MH,
-			      // Model fitting.
-			      double *eta, 
-			      Model *M_m,
-			      double *dev, // DEViation of the current network's targeted statistics from the target statistics.
-			      int runlength,
-			      double *WinvGradient, double *jitter, double *dejitter, double *dev_guard, double *par_guard,
-			      
-			      // Space for output.
-			      Edge maxedges, Edge maxchanges,
-			      Vertex *difftime, Vertex *difftail, Vertex *diffhead,
-			      double *opt_history,
-			      // MCMC settings.
-			      unsigned int SA_burnin, unsigned int SA_interval, unsigned int min_MH_interval, unsigned int max_MH_interval, double MH_pval, double MH_interval_add,
-			      // Verbosity.
-			      int fVerbose){
-  Edge nextdiffedge=1;
-  unsigned int hist_pos=0, p=F_m->n_stats+D_m->n_stats, n, rowsize = p*2 + M_m->n_stats;
-  double *meandev=(double*)R_alloc(M_m->n_stats,sizeof(double)), *last_jitter=(double*)R_alloc(p,sizeof(double)), *init_eta=(double*)R_alloc(p,sizeof(double));
-  memcpy(init_eta, eta, (F_m->n_stats+D_m->n_stats)*sizeof(double));
+MCMCDynStatus MCMCDynSArun(ErgmState *s,
+                  StoreTimeAndLasttoggle *dur_inf,
+                  int nstatsmonitor,
+                  // Model fitting.
+                  double *eta, 
+                  double *inputdev, // DEViation of the current network's targeted statistics from the target statistics.
+                  int runlength,
+                  double *WinvGradient, double *jitter, double *dejitter, double *dev_guard, double *par_guard,
+                  
+                  // Space for output.
+                  int maxedges, int maxchanges,
+                  double *opt_history,
+                  // MCMC settings.
+                  unsigned int SA_burnin, unsigned int SA_interval, unsigned int min_MH_interval, unsigned int max_MH_interval, double MH_pval, double MH_interval_add,
+                  // Verbosity.
+                  int verbose){
+  Network *nwp = s->nwp;
+  Model *m = s->m;
 
+  unsigned int hist_pos=0, p=m->n_stats - nstatsmonitor, n, rowsize = p*2 + nstatsmonitor;
+  double *meandev=(double*)R_alloc(nstatsmonitor,sizeof(double)), *last_jitter=(double*)R_alloc(p,sizeof(double)), *init_eta=(double*)R_alloc(p,sizeof(double));
+  memcpy(init_eta, eta, (m->n_stats - nstatsmonitor)*sizeof(double));
+  
+  double *dev = inputdev + p;
+  
   for(unsigned int i=0; i < runlength; i++){
     n = 0;
-    for(unsigned int j=0; j<M_m->n_stats; j++){
+    for(unsigned int j=0; j<nstatsmonitor; j++){
       meandev[j]=0;
     }
 
     // Jitter parameters
     for(unsigned int j=0; j<p; j++){
       if(jitter[j]!=0){
-	last_jitter[j] = rnorm(0,jitter[j]);
-	eta[j] += last_jitter[j];
+        last_jitter[j] = rnorm(0,jitter[j]);
+        eta[j] += last_jitter[j];
       }else last_jitter[j] = 0;
     }
 
     // Burn in
     for(unsigned int j=0;j < SA_burnin;j++){
-      MCMCDynStatus status = MCMCDyn1Step(nwp,
-					  F_m, F_MH, eta,
-					  D_m, D_MH, eta+F_m->n_stats,
-					  M_m,
-					  0,
-					  NULL, NULL, dev,
-					  maxchanges, &nextdiffedge,
-					  difftime, difftail, diffhead, NULL,
-					  min_MH_interval, max_MH_interval, MH_pval, MH_interval_add,
-					  fVerbose);
+      R_CheckUserInterrupt();
+      MCMCDynStatus status = MCMCDyn1Step(s,
+                      dur_inf,
+                      eta,
+                      inputdev,
+                      maxchanges, NULL,
+                      NULL, NULL, NULL, NULL,
+                      min_MH_interval, max_MH_interval, MH_pval, MH_interval_add,
+                      verbose);
 
       if(status==MCMCDyn_TOO_MANY_CHANGES)
         return MCMCDyn_TOO_MANY_CHANGES;
       
       if(nwp->nedges >= maxedges-1)
-	return MCMCDyn_TOO_MANY_EDGES;
+        return MCMCDyn_TOO_MANY_EDGES;
     }
 
     // Sampling run
     for(unsigned int j=0;j < SA_interval;j++){
-      MCMCDynStatus status = MCMCDyn1Step(nwp,
-					  F_m, F_MH, eta,
-					  D_m, D_MH, eta+F_m->n_stats,
-					  M_m,
-					  0,
-					  NULL, NULL, dev,
-					  maxchanges, &nextdiffedge,
-					  difftime, difftail, diffhead, NULL,
-					  min_MH_interval, max_MH_interval, MH_pval, MH_interval_add,
-					  fVerbose);
+      R_CheckUserInterrupt();
+      MCMCDynStatus status = MCMCDyn1Step(s,
+                      dur_inf,
+                      eta,
+                      inputdev,
+                      maxchanges, NULL,
+                      NULL, NULL, NULL, NULL,
+                      min_MH_interval, max_MH_interval, MH_pval, MH_interval_add,
+                      verbose);
 
       if(status==MCMCDyn_TOO_MANY_CHANGES)
         return MCMCDyn_TOO_MANY_CHANGES;
       
       if(nwp->nedges >= maxedges-1)
-	return MCMCDyn_TOO_MANY_EDGES;
+        return MCMCDyn_TOO_MANY_EDGES;
     
-      for(unsigned int k=0;k<M_m->n_stats; k++){
-	meandev[k]+=dev[k]*1;
-	n+=1;
+      for(unsigned int k=0;k<nstatsmonitor; k++){
+        meandev[k]+=dev[k]*1;
+        n+=1;
       }
-      if (fVerbose>2){
-	for(unsigned int k=0; k<p; k++){
-	  Rprintf("eta[%d] = %f\n", k, eta[k]);
-	}
-	for(unsigned int k=0; k<M_m->n_stats; k++){
-	  Rprintf("M_dev[%d] = %f\n", k, dev[k]);
-	}
+      if (verbose>2){
+        for(unsigned int k=0; k<p; k++){
+          Rprintf("eta[%d] = %f\n", k, eta[k]);
+        }
+        for(unsigned int k=0; k<nstatsmonitor; k++){
+          Rprintf("M_dev[%d] = %f\n", k, dev[k]);
+        }
 
-	Rprintf("\n");
+        Rprintf("\n");
       }
 
       // Record configurations and estimating equation values.
       for(unsigned int j=0; j<p; j++){
-	opt_history[hist_pos*rowsize+j] = eta[j];
+        opt_history[hist_pos*rowsize+j] = eta[j];
       }
       for(unsigned int j=0; j<p; j++){
-	opt_history[hist_pos*rowsize+p+j] = last_jitter[j];
+        opt_history[hist_pos*rowsize+p+j] = last_jitter[j];
       }
-      for(unsigned int j=0; j<M_m->n_stats; j++){
-	opt_history[hist_pos*rowsize+p+p+j] = dev[j];
+      for(unsigned int j=0; j<nstatsmonitor; j++){
+        opt_history[hist_pos*rowsize+p+p+j] = dev[j];
       }
       hist_pos++;
     }
     
-    if(fVerbose>1){
+    if(verbose>1){
       for(unsigned int k=0; k<p; k++){
-	Rprintf("eta[%d] = %f\n", k, eta[k]);
+        Rprintf("eta[%d] = %f\n", k, eta[k]);
       }
-      for(unsigned int k=0; k<M_m->n_stats; k++){
-	Rprintf("meandev[%d] = %f\n", k, meandev[k]/n);
+      for(unsigned int k=0; k<nstatsmonitor; k++){
+        Rprintf("meandev[%d] = %f\n", k, meandev[k]/n);
       }
       
       Rprintf("\n");
     }
 
     // Evaluate mean deviations.
-    for(unsigned int j=0; j<M_m->n_stats; j++){
+    for(unsigned int j=0; j<nstatsmonitor; j++){
       meandev[j]/=n;
     }
     
     // If the statistics are getting worse by too much, stop updating eta and collect data for the rest of the run.
-    for(unsigned int j=0; j<M_m->n_stats; j++){
+    for(unsigned int j=0; j<nstatsmonitor; j++){
       if(fabs(meandev[j]) > dev_guard[j]){
-	memset(WinvGradient, 0, M_m->n_stats*p*sizeof(double));
-	memset(dejitter, 0, p*p*sizeof(double));
+        memset(WinvGradient, 0, nstatsmonitor*p*sizeof(double));
+        memset(dejitter, 0, p*p*sizeof(double));
       }
     }
 
@@ -238,21 +228,21 @@ MCMCDynStatus MCMCDynSArun(// Observed and discordant network.
     // Update formation and dissolution parameters, and cancel the effect of jitter.
     // eta[t+1] = eta[t] - a*(G^-1)*W*(d[t] - G*jit[t])
     //          = eta[t] - a*(G^-1)*W*d[t] + a*(G^-1)*W*G*jit[t]
-    for(unsigned int k=0; k<M_m->n_stats; k++){
+    for(unsigned int k=0; k<nstatsmonitor; k++){
       for(unsigned int j=0; j<p; j++){
-    	  eta[j] -= WinvGradient[k*p+j] * meandev[k];
+        eta[j] -= WinvGradient[k*p+j] * meandev[k];
       }
     }
     for(unsigned int k=0; k<p; k++){
       for(unsigned int j=0; j<p; j++){
-    	  eta[j] += dejitter[k*p+j] * last_jitter[k];
+        eta[j] += dejitter[k*p+j] * last_jitter[k];
       }
     }
 
     // Undo jitter
     for(unsigned int j=0; j<p; j++){
       if(jitter[j]!=0){
-    	  eta[j] -= last_jitter[j];
+        eta[j] -= last_jitter[j];
       }
     }
 
@@ -260,11 +250,10 @@ MCMCDynStatus MCMCDynSArun(// Observed and discordant network.
     for(unsigned int j=0; j<p; j++){
       double change = eta[j] - init_eta[j];
       if(fabs(change) > par_guard[j]){
-	eta[j] = init_eta[j] + (change>0?+1:-1)*par_guard[j]; 
+        eta[j] = init_eta[j] + (change>0?+1:-1)*par_guard[j]; 
       }
     }
   }
 
   return MCMCDyn_OK;
 }
-

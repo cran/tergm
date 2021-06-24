@@ -1,12 +1,12 @@
-#  File R/stergm.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/stergm.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 ################################################################################
 # stergm --- fit Separable Temporal ERGMs.
 ################################################################################
@@ -19,12 +19,30 @@
 #' Conditional MLE (CMLE) (Krivitsky and Handcock, 2010) and Equilibrium
 #' Generalized Method of Moments Estimator (EGMME) (Krivitsky, 2009).
 #' 
+#' This function is included for backwards compatibility, and users are  
+#' encouraged to use the new \code{tergm} family of functions instead.
+#' 
+#' The \code{stergm} function uses a pair of formulas, \code{formation} and 
+#' \code{dissolution} to model tie-dynamics.  The dissolution formula, however, is 
+#' parameterized in terms of tie persistence: negative coefficients imply lower 
+#' rates of persistence and postive coefficients imply higher rates.  
+#' The dissolution effects are simply the negation of these coefficients, but
+#' the discrepancy between the terminology and interpretation has always been
+#' unfortunate, and we have fixed this in the new \code{tergm} function.
+#' 
+#' If you are making the transition from old \code{stergm} to new \code{tergm}, note that
+#' the \code{dissolution} formula in \code{stergm} maps to the new \code{Persist()} 
+#' operator in the \code{tergm} function, NOT the \code{Diss()} operator.
+#' 
+#' 
 #' \strong{Model Terms} See \code{\link{ergm}} and \code{\link{ergm-terms}} for
 #' details. At this time, only linear ERGM terms are allowed.  \itemize{
 #' \item For a brief demonstration, please see the tergm package vignette:
 #' \code{browseVignettes(package='tergm')} \item A more detailed tutorial is
-#' avalible on the statnet wiki:
+#' available on the statnet wiki:
 #' \url{https://statnet.org/Workshops/tergm_tutorial.html} }
+#' 
+#'
 #' 
 #' @param nw A \code{\link[network]{network}} object (for EGMME); or
 #' \code{\link[networkDynamic]{networkDynamic}} object, a
@@ -33,7 +51,11 @@
 #' 
 #' \code{stergm} understands the \code{\link{lasttoggle}} "API".
 #' @param formation,dissolution One-sided \code{\link{ergm}}-style formulas for
-#' the formation and dissolution models, respectively.
+#' the formation and dissolution models, respectively.  In \code{stergm}, 
+#' the dissolution formula is parameterized in
+#' terms of tie persistence: negative coefficients imply lower rates of persistence
+#' and postive coefficients imply higher rates.  The dissolution effects are simply the
+#' negation of these coefficients.
 #' @param constraints A one-sided formula specifying one or more constraints on
 #' the support of the distribution of the networks being modeled, using syntax
 #' similar to the \code{formula} argument. Multiple constraints may be given,
@@ -41,24 +63,11 @@
 #' formula and the reference measure, the constraints define the distribution
 #' of networks being modeled.
 #' 
-#' It is also possible to specify a proposal function directly by passing a
-#' string with the function's name. In that case, arguments to the proposal
-#' should be specified through the \code{prop.args} argument to
-#' \code{\link{control.ergm}}.
-#' 
 #' The default is \code{~.}, for an unconstrained model.
 #' 
 #' See the [ERGM constraints][ergm-constraints] documentation for the
 #' constraints implemented in the **[ergm][ergm-package]** package.
 #' Other packages may add their own constraints.
-#' 
-#' For STERGMs in particular, the constraints apply to the post-formation and
-#' the post-dissolution network, rather than the final network. This means, for
-#' example, that if the degree of all vertices is constrained to be less than
-#' or equal to three, and a vertex begins a time step with three edges, then,
-#' even if one of its edges is dissolved during its time step, it won't be able
-#' to form another edge until the next time step. This behavior may change in
-#' the future.
 #' 
 #' Note that not all possible combinations of constraints are supported.
 #' @param estimate One of "EGMME" for Equilibrium Generalized Method of Moments
@@ -76,7 +85,7 @@
 #'   \code{1:length(nw)} (all transitions) if \code{nw} is a
 #'   \code{\link{network.list}} or a \code{\link{list}}. Unused for
 #'   EGMME. Note that at this time, the selected time points will be
-#'   treated as temporally adjacent. Irregluarly spaced time series
+#'   treated as temporally adjacent. Irregularly spaced time series
 #'   are not supported at this time.
 #' 
 #' @param offset.coef.form Numeric vector to specify offset formation
@@ -86,8 +95,13 @@
 #' @param targets One-sided \code{\link{ergm}}-style formula specifying
 #' statistics whose moments are used for the EGMME. Unused for CMLE and CMPLE.
 #' Targets is required for EGMME estimation. It may contain any valid ergm
-#' terms. If specified as "formation" or "dissolution", it copies the formula
-#' from the respective model. Any offset terms are removed automatically.
+#' terms.  Any offset terms are used only during the 
+#' preliminary SAN run; they are removed automatically for the EGMME proper.
+#' If \code{targets} is specified as a character
+#' (one of \code{"formation"} and \code{"dissolution"}) then
+#' the function \code{\link{.extract.fd.formulae}} is used to determine the
+#' corresponding formula; the user should be aware of its behavior and limitations.
+#' @param SAN.offsets Offset coefficients (if any) to use during the SAN run.
 #' @param target.stats A vector specifying the values of the \code{targets}
 #' statistics that EGMME will try to match.  Defaults to the statistics of
 #' \code{nw}. Unused for CMLE and CMPLE.
@@ -96,55 +110,27 @@
 #'   set globally via `option(tergm.eval.loglik=...)`, falling back to
 #'   `getOption("ergm.eval.loglik")` if not set.
 #' @param control A list of control parameters for algorithm tuning.
-#' Constructed using \code{\link{control.stergm}}.
+#' Constructed using \code{\link{control.stergm}}.  Remapped to 
+#' \code{\link{control.tergm}}.
 #' @param verbose logical or integer; if TRUE or positive, the program will
 #' print out progress information. Higher values result in more output.
 #' @param \dots Additional arguments, to be passed to lower-level functions.
-#' @return \code{\link{stergm}} returns an object of class \code{\link{stergm}}
-#' that is a list consisting of the following elements:
-#' \item{formation, dissolution}{Formation and dissolution formulas,
-#' respectively.}
-#' \item{targets}{The targets formula.}
-#' \item{target.stats}{The target statistics.}
-#' \item{estimate}{The type of estimate.}
-#' \item{opt.history}{A
-#' matrix containing the full trace of the EGMME optimization process:
-#' coefficients tried and target statistics simulated.}
-#' \item{sample}{An \code{\link{mcmc}} object containing target
-#' statistics sampled at the estimate.}
-#' \item{covar}{The full estimated
-#' variance-covariance matrix of the parameter estimates for EGMME. (Note that
-#' although the CMLE formation parameter estimates are independent of the
-#' dissolution parameter estimates due to the separability assumption, this is
-#' not necessarily the case for EGMME.) }
-#' \item{formation.fit, dissolution.fit}{For CMLE and CMPLE, \code{\link{ergm}} objects from
-#' fitting formation and dissolution, respectively. For EGMME, stripped down
-#' \code{\link{ergm}}-like lists.}
-#' \item{network}{For
-#' \code{estimate=="EGMME"}, the original network; for \code{estimate=="CMLE"}
-#' or \code{estimate=="CMPLE"}, a \code{\link{network.list}} (a discrete series
-#' of networks) to which the model was fit.}
-#' \item{control}{The control
-#' parameters used to fit the model.} 
-#' 
-#' See the method \code{\link{print.stergm}} for details on how an
-#' \code{\link{stergm}} object is printed.  Note that the method
-#' \code{\link{summary.stergm}} returns a summary of the relevant parts of the
-#' \code{\link{stergm}} object in concise summary format.
-#' @seealso ergm, network, \%v\%, \%n\%, \code{\link{ergm-terms}}
-#' @references \itemize{
+#' @return \code{\link{stergm}} returns an object of class [`tergm`];
+#'         see [tergm()] for details and methods.
 #'
-#' \item Krivitsky P.N. and Handcock M.S. (2014) A Separable Model for Dynamic Networks. \emph{Journal of the Royal Statistical Society, Series B}, 76(1): 29-46. \doi{10.1111/rssb.12014}
+#' @seealso ergm, network, \%v\%, \%n\%, \code{\link{ergm-terms}}
+#' @references
+#'
+#' Krivitsky P.N. and Handcock M.S. (2014) A Separable Model for Dynamic Networks. \emph{Journal of the Royal Statistical Society, Series B}, 76(1): 29-46. \doi{10.1111/rssb.12014}
 #' 
-#' \item Krivitsky, P.N. (2012). Modeling of Dynamic Networks based on
+#' Krivitsky, P.N. (2012). Modeling of Dynamic Networks based on
 #' Egocentric Data with Durational Information. \emph{Pennsylvania State
 #' University Department of Statistics Technical Report}, 2012(2012-01).
 #' \url{https://web.archive.org/web/20170830053722/https://stat.psu.edu/research/technical-report-files/2012-technical-reports/TR1201A.pdf}
 #' 
-#' }
-#' @examples
 #' 
-#' \donttest{
+#' @examples
+#' \dontrun{
 #' # EGMME Example
 #' par(ask=FALSE)
 #' n<-30
@@ -161,7 +147,9 @@
 #' par(ask=TRUE)
 #' mcmc.diagnostics(dynfit)
 #' summary(dynfit)
-#' 
+#' }
+#'
+#' \donttest{
 #' # CMLE Example
 #' data(samplk)
 #' 
@@ -183,6 +171,7 @@
 #' mcmc.diagnostics(samplk123)
 #' summary(samplk123)
 #' }
+#'
 #' @import network
 #' @import networkDynamic
 #' @export
@@ -190,7 +179,7 @@ stergm <- function(nw, formation, dissolution, constraints = ~., estimate, times
                    targets=NULL, target.stats=NULL,
                    eval.loglik=NVL(getOption("tergm.eval.loglik"), getOption("ergm.eval.loglik")),
                    control=control.stergm(),
-                   verbose=FALSE, ...) {
+                   verbose=FALSE, ..., SAN.offsets = NULL) {
   check.control.class("stergm", "stergm")
   
   if(!is.null(control$seed))  set.seed(as.integer(control$seed))
@@ -209,30 +198,86 @@ stergm <- function(nw, formation, dissolution, constraints = ~., estimate, times
     warning("Dissolution formula has an LHS, which will be ignored in favor of nw.")
     dissolution <- dissolution[c(1,3)] # in a formula f<-y~x, f[1]=~, f[2]=y, and f[3]=x
   }
-  
-  # lasttoggle
-  if(estimate=="EGMME"){
-  duration.dependent <- is.lasttoggle(nw,formation,dissolution,targets)
-  
-  if(duration.dependent)
-    nw %n% "lasttoggle" <- NVL(nw %n% "lasttoggle",rep(round(-.Machine$integer.max/2), network.dyadcount(nw)))  else nw %n% "lasttoggle" <- NULL
+
+  ## need to make sure offsets and inits are set up properly for the tergm call below
+  if(!is.null(control$init.form) || 
+     !is.null(control$init.diss) || 
+     (estimate %in% c("CMLE", "CMPLE") && (!is.null(control$CMLE.form.ergm$init) || 
+                                           !is.null(control$CMLE.diss.ergm$init)))) {
+    if(estimate == "EGMME") {
+      nw_stergm <- nw
+      term.options <- control$term.options
+      form_model <- ergm_model(formation, nw = nw_stergm, term.options = term.options, dynamic = TRUE, ...)
+      diss_model <- ergm_model(dissolution, nw = nw_stergm, term.options = term.options, dynamic = TRUE, ...)
+      init.form <- NVL(control$init.form, rep(NA, nparam(form_model, canonical = FALSE)))
+      init.diss <- NVL(control$init.diss, rep(NA, nparam(diss_model, canonical = FALSE)))
+    } else {
+      if(!is(nw, "tergm_NetSeries")) {
+        if(inherits(nw, "network.list") || (is.list(nw) && !is.network(nw) && is.network(nw[[1]]))) {
+          nw_stergm <- NetSeries(nw, NA.impute=control$CMLE.NA.impute)
+        } else if(inherits(nw,"networkDynamic")) {
+          nw_stergm <- NetSeries(nw, times, NA.impute=control$CMLE.NA.impute)
+        } else {
+          stop("Unsupported specification for the network series. See help for ",sQuote("NetSeries")," for arguments.")
+        }
+      } else {
+        nw_stergm <- nw
+      }
+      term.options <- control$CMLE.form.ergm$term.options
+      form_model <- ergm_model(formation, nw = nw_stergm, term.options = term.options, ...)
+      diss_model <- ergm_model(dissolution, nw = nw_stergm, term.options = term.options, ...)
+      init.form <- NVL(control$CMLE.form.ergm$init, control$init.form, rep(NA, nparam(form_model, canonical = FALSE)))
+      init.diss <- NVL(control$CMLE.diss.ergm$init, control$init.diss, rep(NA, nparam(diss_model, canonical = FALSE)))
+    }
+
+    if(length(init.form) != nparam(form_model, canonical = FALSE)) {
+      stop("Incorrect length of init.form passed to stergm(); expected ", nparam(form_model, canonical = FALSE), ", got ", length(init.form), ".")
+    }
+
+    if(length(init.diss) != nparam(diss_model, canonical = FALSE)) {
+      stop("Incorrect length of init.diss passed to stergm(); expected ", nparam(diss_model, canonical = FALSE), ", got ", length(init.diss), ".")
+    }
+    
+    if(!is.null(offset.coef.form)) {
+      if(length(offset.coef.form) != sum(form_model$etamap$offsettheta)) {
+        stop("Incorrect length of offset.coef.form passed to stergm(); expected ", sum(form_model$etamap$offsettheta), ", got ", length(offset.coef.form), ".")
+      }
+      init.form[form_model$etamap$offsettheta] <- offset.coef.form
+    }
+    if(!is.null(offset.coef.diss)) {
+      if(length(offset.coef.diss) != sum(diss_model$etamap$offsettheta)) {
+        stop("Incorrect length of offset.coef.diss passed to stergm(); expected ", sum(diss_model$etamap$offsettheta), ", got ", length(offset.coef.diss), ".")
+      }      
+      init.diss[diss_model$etamap$offsettheta] <- offset.coef.diss
+    }
+    
+    offset.coef.form <- init.form[form_model$etamap$offsettheta]
+    offset.coef.diss <- init.diss[diss_model$etamap$offsettheta]
+    
+    if(any(is.na(offset.coef.form))) {
+      stop("Formation model contains offsets whose coefficients have not been specified.")
+    }
+
+    if(any(is.na(offset.coef.diss))) {
+      stop("Dissolution model contains offsets whose coefficients have not been specified.")
+    }
+    
+    control$init.form <- init.form
+    control$init.diss <- init.diss
   }
   
-  out <- switch(estimate,
-                CMLE=,
-                CMPLE=stergm.CMLE(nw, formation, dissolution, constraints,
-                  times, offset.coef.form, offset.coef.diss, eval.loglik,
-                  estimate, control, verbose),
-                EGMME=stergm.EGMME(nw, formation, dissolution, constraints,
-                  offset.coef.form, offset.coef.diss,
-                  targets, target.stats, estimate, control, verbose)
-                  )
+  control$init <- c(control$init.form, control$init.diss) 
+
+  control$MCMC.prop <- control$MCMC.prop.form
+  control$MCMC.prop.weights <- control$MCMC.prop.weights.form
+  control$MCMC.prop.args <- control$MCMC.prop.args.form
+
+  control$CMLE.ergm <- control$CMLE.form.ergm
+  control$CMLE.ergm$init <- control$init
   
+  control <- set.control.class("control.tergm")
   
-  out$formation <- formation
-  out$dissolution <- dissolution
-  out$control <- control
+  formula <- nw ~ Form(formation) + Persist(dissolution)
   
-  class(out)<-"stergm"
-  out
+  tergm(formula=formula, constraints=constraints, estimate=estimate, times=times, offset.coef=c(offset.coef.form, offset.coef.diss), targets=targets, target.stats=target.stats, eval.loglik=eval.loglik, control=control, verbose=verbose, SAN.offsets = SAN.offsets, ...)
 }

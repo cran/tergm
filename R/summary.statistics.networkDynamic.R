@@ -1,12 +1,12 @@
-#  File R/summary.statistics.networkDynamic.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/summary.statistics.networkDynamic.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 
 #' Calculation of networkDynamic statistics.
 #' 
@@ -42,20 +42,19 @@
 #' # at discrete time points
 #' summary(my.nD~isolates+edges, at=1:10)
 #' @importFrom ergm summary_formula
+#' @importFrom utils getS3method
 #' @export
 summary_formula.networkDynamic <- function(object, at,..., basis=NULL){
   if (missing(at) || !is.numeric(at)){
     stop( "summary_formula.networkDynamic requires an 'at' parameter specifying the time points at which to summarize the formula")
   }
-  if(!is.null(basis)) object <- nonsimp_update.formula(object, basis~., from.new="basis")
-  duration.dependent <- is.durational(object)
+  basis <- NVL(basis, ergm.getnetwork(object))
   t(rbind(sapply(at,
               function(t){
-                nw <- network.extract.with.lasttoggle(ergm.getnetwork(object), t, duration.dependent)
-                f <- nonsimp_update.formula(object, nw~., from.new="nw")
+                nw <- network.extract.with.lasttoggle(basis, t)
                 # make sure this is dispatched to the .network  and not .networkDynamic version
                 # of summary statistics to avoid recurisve calls
-                getS3method("summary_formula","network")(f,...)
+                getS3method("summary_formula","network")(object, basis=nw, ...)
               }
           )
       )

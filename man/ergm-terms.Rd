@@ -1,24 +1,36 @@
-%  File man/ergm-terms.Rd in package tergm, part of the Statnet suite
-%  of packages for network analysis, https://statnet.org .
+%  File man/ergm-terms.Rd in package tergm, part of the
+%  Statnet suite of packages for network analysis, https://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) at
-%  https://statnet.org/attribution
+%  https://statnet.org/attribution .
 %
-%  Copyright 2008-2020 Statnet Commons
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2008-2021 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-terms}
 \alias{ergm-terms}
 \alias{ergm.terms}
 \alias{terms-ergm}
 \alias{terms.ergm}
+\alias{Form}
+\alias{Diss}
+\alias{Persist}
+\alias{Cross}
+\alias{Change}
 \alias{edge.ages}
 \alias{mean.age}
+\alias{nodefactor.mean.age}
+\alias{nodemix.mean.age}
 \alias{edges.ageinterval}
 \alias{edgecov.ages}
 \alias{edgecov.mean.age}
 \alias{degree.mean.age}
 \alias{degrange.mean.age}
+\alias{InitErgmTerm.Form}
+\alias{InitErgmTerm.Diss}
+\alias{InitErgmTerm.Persist}
+\alias{InitErgmTerm.Cross}
+\alias{InitErgmTerm.Change}
 \alias{InitErgmTerm.edge.ages}
 \alias{InitErgmTerm.edgecov}
 \alias{InitErgmTerm.edgecov.ages}
@@ -29,24 +41,78 @@
 \alias{InitErgmTerm.degree.mean.age}
 
 \docType{methods}
-\title{Temporally-Sensitive Terms used in Exponential Family Random Graph Models}
+\title{Temporally-Sensitive Operator and Durational Terms used in Exponential Family Random Graph Models}
 \description{
-  Unlike ordinary \code{\link[ergm]{ergm-terms}}, which take only a single
-  network as an argument, the terms documented here also take into
-  account the "ages" of extant ties in the network: the time elapsed since
-  their formation.
+  The terms described here are unique to temporal networks:  each summarizes
+  some type of change or durational information.
+  
+  The operator terms include: \code{Form()}, \code{Persist()}, \code{Diss()}, 
+  \code{Cross()} and \code{Change()}.  These are used to specify how the 
+  \code{\link[ergm]{ergm-terms}} in a formula are evaluated across a network
+  time-series.  Note, you cannot use an operator within another operator, so
+  \code{Cross(~Form(~edges))} is not a valid specification.
+  
+  The durational terms are distinguished either by their name, \code{mean.age}, or
+  their name extensions: \code{<name>.ages}, 
+  \code{<name>.mean.age}, and \code{<name>.age.interval}.  In contrast to their named
+  \code{\link[ergm]{ergm-terms}} counterparts, these durational terms take into account
+  the elapsed time since each (term-relevant) dyad in the network was last toggled.  
+  
+  As currently implemented, the package does not support use of durational 
+  terms during estimation.  But durational terms may be used as targets, monitors,
+  or summary statistics.  The ability to 
+  use these terms in the estimation of models is under development.
 
-  As implemented, many of these terms cannot be used to "drive" the process
-  of network evolution, but they can be used as target statistics to
-  infer the terms that do. More concretely, they may appear in
-  \code{targets=} or \code{monitor=} formulas of
-  \code{\link{stergm}}, \code{\link{simulate.stergm}}, or
-  \code{\link[ergm]{summary.formula}} (with an ERGM formula), but they may
-  not appear in their \code{\link[=stergm]{formation=}} and
-  \code{\link[=stergm]{dissolution=}} formulas. These terms are marked with
-  "(target-only)".
+  All terms listed here currently work with binary-valued ties only.
+}
 
-  All terms listed here are binary.
+\section{Operator Terms included in the
+  \code{\link[=tergm-package]{tergm}} package}{
+  \describe{
+    \item{\code{Form(formula)}}{
+      \emph{The Formation Operator Term:} This term accepts a model formula
+      \code{formula} and produces the corresponding model for the post-formation network:
+      effectively a network containing both previous time step's ties and ties just formed,
+      the union of the previous and current network.  This is the equivalent of the 
+      old-style \code{formation} model.
+    }
+    
+    \item{\code{Persist(formula)}}{
+      \emph{The Persistence Operator Term:} This term accepts a model formula
+      \code{formula} and produces the corresponding model for the 
+      post-dissolution/persistence network: effectively the network containing 
+      ties that persisted since the last time step.  
+      
+      This is the equivalent of the old-style \code{dissolution} model.  So 
+      a larger positive coefficient for \code{Persist()} operator means 
+      \emph{less} dissolution.  It 
+      produces the same results as the new \code{Diss()} operator, except the 
+      signs of the coefficients are negated.  
+    }
+
+    \item{\code{Diss(formula)}}{
+      \emph{The Dissolution Operator Term:} This term accepts a model formula
+      \code{formula} and produces the corresponding model for the post-dissolution 
+      network (same as \code{Persist()}), but with all statistics negated.
+      
+      Note:  This is not the equivalent of the old style \code{dissolution} model, 
+      because the signs of the coefficients are reversed. So a larger positive 
+      coefficient for \code{Diss()} operator means \emph{more} dissolution.
+    }
+    
+    \item{\code{Cross(formula)}}{
+      \emph{The Crossection Operator Term:} This term accepts a model formula
+      \code{formula} and produces the corresponding model for the cross-sectional
+      network. It is mainly useful for CMLE estimation, and has no effect (i.e.,
+      \code{Cross(~TERM) == ~TERM}) for EGMME and dynamic simulation.
+    }
+
+    \item{\code{Change(formula)}}{
+      \emph{The Change Operator Term:} This term accepts a model formula
+      \code{formula} and produces the corresponding model for a network constructed
+      by taking the dyads that have changed between time steps.
+    }
+  }
 }
 
 \section{Terms to represent network statistics included in the
@@ -54,7 +120,7 @@
   \describe{
 
     \item{\code{degrange.mean.age(from, to=+Inf, byarg=NULL, emptyval=0)}
-      (target-only)}{\emph{Average age of ties incident on nodes having
+      }{\emph{Average age of ties incident on nodes having
       degree in a given range:} 
       The \code{from} and \code{to} arguments are vectors of distinct
       integers or \code{+Inf}, for \code{to}. If one of the vectors has
@@ -65,8 +131,9 @@
       with degree greater than or equal to 
       \code{from[i]} but strictly less than \code{to[i]}, of the amount of time elapsed
       since the tie's formation. The optional argument
-      \code{by} is a character string giving the name of an attribute in the
-      network's vertex attribute list. If specified, then separate degree 
+      \code{byarg} specifies a vertex attribute (see 
+      \link[ergm:nodal_attributes]{Specifying Vertex Attributes and Levels}
+      for details). If specified, then separate degree 
       statistics are calculated for nodes having each separate
       value of the attribute.
       
@@ -78,16 +145,17 @@
       networks at the parameter configuration of interest has no actors
       with specified degree. }
 
-    \item{\code{degree.mean.age(d, by=NULL,
-	emptyval=0)} (target-only)}{\emph{Average age of ties incident
+    \item{\code{degree.mean.age(d, byarg=NULL,
+	emptyval=0)}}{\emph{Average age of ties incident
 	on nodes having a given degree:}
       The \code{d} argument is a vector of distinct integers. This term adds one
       network statistic to the model for each element in \code{d}; the \eqn{i}th
       such statistic equals the average, among all ties incident on nodes
       with degree exactly \code{d[i]}, of the amount of time elapsed
       since the tie's formation. The optional argument
-      \code{by} is a character string giving the name of an attribute in the
-      network's vertex attribute list. If specified, then separate degree 
+      \code{byarg} specifies a vertex attribute (see 
+      \link[ergm:nodal_attributes]{Specifying Vertex Attributes and Levels}
+      for details).  If specified, then separate degree 
       statistics are calculated for nodes having each separate
       value of the attribute.
       
@@ -100,7 +168,7 @@
       with specified degree.  }
 
     
-    \item{\code{edges.ageinterval(from, to=+Inf)} (dissolution- and target-only)}{\emph{Number of edges
+    \item{\code{edges.ageinterval(from, to=+Inf)}}{\emph{Number of edges
       with age falling into a specified range:}
       This term counts the number of edges in the network for
       which the time elapsed since formation is greater than or equal to
@@ -109,12 +177,12 @@
       \code{to} may be scalars, vectors of the same length, or one of
       them must have length one, in which case it is recycled.
 
-      When used in the dissolution formula of a STERGM, it can be used
-      to model a non-Markovian dissolution process, controlling the
-      hazard function in the interval directly.
+%      When used in the dissolution formula of a STERGM, it can be used
+%      to model a non-Markovian dissolution process, controlling the
+%      hazard function in the interval directly.
     }
 
-    \item{\code{edge.ages} (target-only)}{\emph{Sum of ages of extant
+    \item{\code{edge.ages}}{\emph{Sum of ages of extant
 	ties:} 
       This term adds one statistic equaling sum, over all ties
       present in the network, of the amount of time elapsed since
@@ -126,7 +194,7 @@
       is to get an intended average duration.
     }
 
-    \item{\code{edgecov.ages(x, attrname=NULL)} (target-only)}{\emph{Weighted sum of ages of extant
+    \item{\code{edgecov.ages(x, attrname=NULL)}}{\emph{Weighted sum of ages of extant
 	ties:} 
       This term adds one statistic equaling sum, over all ties
       present in the network, of the amount of time elapsed since
@@ -143,7 +211,7 @@
     }
     
     \item{\code{edgecov.mean.age(x, attrname=NULL,
-	emptyval=0)} (target-only)}{\emph{Weighted average age of an extant
+	emptyval=0)}}{\emph{Weighted average age of an extant
 	tie:} 
       This term adds one statistic equaling the average, over all ties
       present in the network, of the amount of time elapsed since
@@ -162,8 +230,7 @@
       and/or if only a few dyads have nonzero weights.  }
     
     
-    \item{\code{mean.age(emptyval=0)} (target-only)}{\emph{Average age of an extant
-	tie:} 
+    \item{\code{mean.age(emptyval=0, log=FALSE)}}{\emph{Average age of an extant tie:} 
       This term adds one statistic equaling the average, over all ties
       present in the network, of the amount of time elapsed since
       formation.
@@ -172,9 +239,51 @@
       argument \code{emptyval} can be used to specify the value returned
       if it is. This is, technically, an arbitrary value, but it should
       not have a substantial effect unless a non-negligible fraction of
-      networks at the parameter configuration of interest is empty.  }
+      networks at the parameter configuration of interest is empty.
+      
+      To get mean log age instead of mean age, set \code{log=TRUE}.          
+    }
 
-    
+    \item{\code{nodefactor.mean.age(attr, levels=NULL, emptyval=0, log=FALSE)}}{\emph{Average ages of extant half-ties incident on nodes of specified attribute levels:} 
+      This term adds one statistic for each level of \code{attr}, 
+      equaling the average, over all half-ties incident on nodes of that level,
+      of the amount of time elapsed since formation.
+
+      To control what levels are included, use the \code{levels} argument.  Note that the default
+      \code{levels} value for \code{nodefactor.mean.age} retains all levels, unlike the default
+      for \code{nodefactor}, which omits the first level.
+      
+      See \link[ergm:nodal_attributes]{Specifying Vertex Attributes and Levels} 
+      for details on specifying vertex attributes and levels.
+      
+      The argument \code{emptyval} functions like it does for \code{mean.age},
+      except that a different value may be specified for each level of \code{attr}.
+      The length of \code{emptyval} should either be 1 (in which case that value is
+      used for every level of \code{attr}) or should be equal to the number of retained
+      levels of \code{attr}, in which case the \code{i}th value in \code{emptyval} is used
+      for the \code{i}th retained level of \code{attr}.      
+      
+      To get mean log age instead of mean age, set \code{log=TRUE}; this is applied to all levels.
+    }
+      
+    \item{\code{nodemix.mean.age(attr, b1levels=NULL, b2levels=NULL, levels=NULL, levels2=NULL, emptyval=0, log=FALSE)}}{\emph{Average ages of extant ties of specified mixing types:} 
+      This term adds one statistic for each mixing type of \code{attr}, 
+      equaling the average, over all ties of that mixing type,
+      of the amount of time elapsed since formation.
+      
+      The \code{levels}-related arguments function just like they do for the ordinary \code{nodemix} term.
+      See \link[ergm:nodal_attributes]{Specifying Vertex Attributes and Levels} 
+      for details on specifying vertex attributes and levels.      
+      
+      The argument \code{emptyval} functions like it does for \code{mean.age},
+      except that a different value may be specified for each mixing type of \code{attr}.
+      The length of \code{emptyval} should either be 1 (in which case that value is
+      used for every mixing type of \code{attr}) or should be equal to the number of retained
+      mixing types of \code{attr}, in which case the \code{i}th value in \code{emptyval} is used
+      for the \code{i}th retained mixing type of \code{attr}.
+            
+      To get mean log age instead of mean age, set \code{log=TRUE}; this is applied to all mixing types.
+    }
   }
 }
 \references{

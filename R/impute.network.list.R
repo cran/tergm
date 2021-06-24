@@ -1,12 +1,12 @@
-#  File R/impute.network.list.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/impute.network.list.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 
 
 #' Impute missing dyads in a series of networks
@@ -23,7 +23,7 @@
 #'   follows: \describe{ \item{`next`}{Impute the state of the same
 #'   dyad in the next network in the list (or later, if that one is
 #'   also missing).  This imputation method is likely to lead to an
-#'   underestimation of the formation and dissolution rates. The last
+#'   underestimation of the tie-change rates. The last
 #'   network in the list cannot be imputed this way.}
 #'   \item{`previous`}{Impute the state of the same dyad in
 #'   the previous network in the list (or earlier, if that one is also

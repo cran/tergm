@@ -1,12 +1,12 @@
-#  File R/control.stergm.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/control.stergm.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 ###########################################################################
 # The <control.stergm> function allows the ergm fitting process to be tuned
 # by returning a list of several control parameters
@@ -20,6 +20,17 @@
 #' 
 #' This function is only used within a call to the \code{\link{stergm}}
 #' function.  See the \code{usage} section in \code{\link{stergm}} for details.
+#' Generally speaking, \code{control.stergm} is remapped to \code{control.tergm},
+#' with dissolution controls ignored and formation controls used as controls
+#' for the overall \code{tergm} process.  An exception to this rule is the
+#' initial parameter values specified via \code{init.form}, \code{init.diss},
+#' \code{CMLE.form.ergm$init}, and \code{CMLE.diss.ergm$init}, which will be
+#' remapped jointly with the \code{stergm()} arguments \code{offset.coef.form} 
+#' and \code{offset.coef.diss} to determine the initial parameter values passed 
+#' to \code{tergm}.
+#' 
+#' It is recommended that new code make use of \code{tergm} and \code{control.tergm}
+#' directly; \code{stergm} wrappers are included only for backwards compatibility.
 #' 
 #' @param init.form,init.diss numeric or \code{NA} vector equal in
 #'   length to the number of parameters in the formation/dissolution
@@ -31,7 +42,7 @@
 #'   interpreted as follows: \itemize{ \item Elements corresponding to
 #'   terms enclosed in \code{offset()} are used as the fixed offset
 #'   coefficients. These should match the offset values given in
-#'   \code{offset.coef.form}.
+#'   \code{offset.coef.form} and \code{offset.coef.diss}.
 #' 
 #'   \item Elements that do not correspond to offset terms and are not
 #'   \code{NA} are used as starting values in the estimation.
@@ -40,46 +51,41 @@
 #'   using the method specified by
 #'   \code{\link[=control.ergm]{control$init.method}}.
 #' 
-#'   } Passing \code{control.ergm(init=coef(prev.fit))} can be used to
-#'   "resume" an uncoverged \code{\link{stergm}} run, but see
-#'   \code{\link{enformulate.curved}}.
+#'   } Passing coefficients from a previous run can be used to
+#'   "resume" an uncoverged \code{\link{stergm}} run.
 #' @param init.method Estimation method used to acquire initial values
 #'   for estimation. If \code{NULL} (the default), the initial values
 #'   are computed using the edges dissolution approximation (Carnegie
-#'   et al.) when appropriate.  If set to "zeros", the initial values
-#'   are set to zeros.
+#'   et al.) when appropriate; note that this relies on \code{\link{.extract.fd.formulae}}
+#'   to identify the formation and dissolution parts of the formula; the user should
+#'   be aware of its behavior and limitations.
+#'   If \code{init.method} is set to "zeros", the initial values are set to zeros.
 #' @param force.main Logical: If TRUE, then force MCMC-based
 #'   estimation method, even if the exact MLE can be computed via
 #'   maximum pseudolikelihood estimation.
-#' @param MCMC.prop.weights.form,MCMC.prop.weights.diss Specifies the
-#'   method to allocate probabilities of being proposed to dyads in
-#'   the formation/dissolution phase. Defaults to \code{"default"},
-#'   which picks a reasonable default for the specified
-#'   constraint. Possible values include \code{"TNT"},
-#'   \code{"random"}, though not all values may be used with all
-#'   possible constraints.
-#' @param MCMC.prop.args.form,MCMC.prop.args.diss An alternative,
-#'   direct way of specifying additional arguments to the proposal in
-#'   the formation/dissolution phase.
-#' @param MCMC.init.maxedges Maximum number of edges for which to
+#' @param MCMC.prop.weights.form Specifies the proposal weighting to use.
+#' @param MCMC.prop.args.form A direct way of specifying arguments to the proposal.
+#' @param MCMC.prop.form Hints and/or constraints for selecting and initializing the proposal.
+#' @param MCMC.prop.weights.diss,MCMC.prop.args.diss,MCMC.prop.diss
+#'   Ignored.
+#' @param MCMC.maxedges Maximum number of edges for which to
 #'   allocate space.
-#' @param MCMC.init.maxchanges Maximum number of changes in dynamic
+#' @param MCMC.maxchanges Maximum number of changes in dynamic
 #'   network simulation for which to allocate space.
 #' @param MCMC.packagenames Names of packages in which to look for
 #'   change statistic functions in addition to those
 #'   autodetected. This argument should not be needed outside of very
 #'   strange setups.
-#' @param CMLE.MCMC.burnin Maximum number of Metropolis-Hastings steps
-#'   per phase (formation and dissolution) per time step used in CMLE
-#'   fitting.
+#' @param CMLE.MCMC.burnin Burnin used in CMLE fitting.
 #' @param CMLE.MCMC.interval Number of Metropolis-Hastings steps
 #'   between successive draws when running MCMC MLE.
-#' @param CMLE.control A convenience argument for specifying both
-#'   \code{CMLE.control.form} and \code{CMLE.control.diss} at once.
+#' @param CMLE.ergm A convenience argument for specifying both
+#'   \code{CMLE.form.ergm} and \code{CMLE.diss.ergm} at once.
 #'   See \code{\link{control.ergm}}.
-#' @param CMLE.control.form,CMLE.control.diss Control parameters used
-#'   to fit the CMLE for the formation/dissolution ERGM.  See
+#' @param CMLE.form.ergm Control parameters used to fit the CMLE.  See
 #'   \code{\link{control.ergm}}.
+#' @param CMLE.diss.ergm
+#'   Ignored, with the exception of initial parameter values.
 #' @param CMLE.NA.impute In STERGM CMLE, missing dyads in
 #'   transitioned-to networks are accommodated using methods of
 #'   Handcock and Gile (2009), but a similar approach to
@@ -103,12 +109,11 @@
 #'   Equilibrium Generalized Method of Moments estimator.  Currently
 #'   only "Gradient-Descent" is implemented.
 #' @param EGMME.MCMC.burnin.min,EGMME.MCMC.burnin.max, Number of
-#'   Metropolis-Hastings steps per phase (formation and dissolution)
+#'   Metropolis-Hastings steps 
 #'   per time step used in EGMME fitting. By default, this is
 #'   determined adaptively by keeping track of increments in the
 #'   Hamming distance between the transitioned-from network and the
-#'   network being sampled (formation network or dissolution
-#'   network). Once \code{EGMME.MCMC.burnin.min} steps have elapsed,
+#'   network being sampled. Once \code{EGMME.MCMC.burnin.min} steps have elapsed,
 #'   the increments are tested against 0, and when their average
 #'   number becomes statistically indistinguishable from 0 (with the
 #'   p-value being greater than \code{EGMME.MCMC.burnin.pval}), or
@@ -117,16 +122,15 @@
 #'   \code{EGMME.MCMC.burnin.add} times the number of elapsed steps
 #'   had been taken. (Stopping immediately would bias the sampling.)
 #' 
-#'   To use a fixed number of steps, set both
+#'   To use a fixed number of steps, set 
 #'   \code{EGMME.MCMC.burnin.min} and \code{EGMME.MCMC.burnin.max} to
-#'   the desired number of steps.
+#'   the same value.
 #' @param EGMME.MCMC.burnin.pval,EGMME.MCMC.burnin.add Number of
-#'   Metropolis-Hastings steps per phase (formation and dissolution)
+#'   Metropolis-Hastings steps
 #'   per time step used in EGMME fitting. By default, this is
 #'   determined adaptively by keeping track of increments in the
 #'   Hamming distance between the transitioned-from network and the
-#'   network being sampled (formation network or dissolution
-#'   network). Once \code{EGMME.MCMC.burnin.min} steps have elapsed,
+#'   network being sampled. Once \code{EGMME.MCMC.burnin.min} steps have elapsed,
 #'   the increments are tested against 0, and when their average
 #'   number becomes statistically indistinguishable from 0 (with the
 #'   p-value being greater than \code{EGMME.MCMC.burnin.pval}), or
@@ -135,17 +139,17 @@
 #'   \code{EGMME.MCMC.burnin.add} times the number of elapsed steps
 #'   had been taken. (Stopping immediately would bias the sampling.)
 #' 
-#'   To use a fixed number of steps, set both
+#'   To use a fixed number of steps, set 
 #'   \code{EGMME.MCMC.burnin.min} and \code{EGMME.MCMC.burnin.max} to
-#'   the desired number of steps.
+#'   the same value.
 #' @param SAN.maxit When \code{target.stats} argument is passed to
 #' [ergm()], the maximum number of attempts to use \code{\link{san}}
 #' to obtain a network with statistics close to those specified.
 #' @param SAN.nsteps.times Multiplier for \code{SAN.nsteps} relative to
 #' \code{MCMC.burnin}. This lets one control the amount of SAN burn-in
 #' (arguably, the most important of SAN parameters) without overriding the
-#' other SAN.control defaults.
-#' @param SAN.control SAN control parameters.  See
+#' other SAN defaults.
+#' @param SAN SAN control parameters.  See
 #'   \code{\link{control.san}}
 #' @param SA.restarts Maximum number of times to restart a failed
 #'   optimization process.
@@ -155,7 +159,7 @@
 #'   about the fit as it proceeds. If \code{SA.plot.progress==TRUE},
 #'   plot the trajectories of the parameters and target statistics as
 #'   the optimization progresses. If \code{SA.plot.stats==TRUE}, plot
-#'   a heatmap reprsenting correlations of target statistics and a
+#'   a heatmap representing correlations of target statistics and a
 #'   heatmap representing the estimated gradient.
 #' 
 #'   Do NOT use these with non-interactive plotting devices like
@@ -275,7 +279,7 @@
 #'   statistics at the final estimate and compute the covariance
 #'   matrix (and hence standard errors) of the parameters. This sample
 #'   is stored and can also be used by
-#'   \code{\link{mcmc.diagnostics.stergm}} to assess convergence.
+#'   [mcmc.diagnostics()] to assess convergence.
 #' @param SA.phase3.samplesize.runs This many optimization runs will
 #'   be used to determine whether the optimization has converged and
 #'   to estimate the standard errors.
@@ -301,42 +305,47 @@
 #'   \code{EGMME.MCMC.burnin.pval}, \code{EGMME.MCMC.burnin.pval},
 #'   \code{EGMME.MCMC.burnin.add} and \code{CMLE.MCMC.burnin} and
 #'   \code{CMLE.MCMC.interval}.
+#'
+#' @param \dots Additional arguments, passed to other functions This argument
+#' is helpful because it collects any control parameters that have been
+#' deprecated; a warning message is printed in case of deprecated arguments.
+#'
 #' @return A list with arguments as components.
-#' @seealso \code{\link{stergm}}. The
+#' @seealso \code{\link{stergm}},\code{\link{tergm}},\code{\link{control.tergm}}. The
 #'   \code{\link{control.simulate.stergm}} function performs a similar
-#'   function for \code{\link{simulate.stergm}}.
-#' @references \itemize{ \item Boer, P., Huisman, M., Snijders,
+#'   function for \code{\link{simulate.tergm}}.
+#' @references Boer, P., Huisman, M., Snijders,
 #'   T.A.B., and Zeggelink, E.P.H. (2003), StOCNET User\'s
 #'   Manual. Version 1.4.
 #' 
-#' \item Firth (1993), Bias Reduction in Maximum Likelihood Estimates.
+#' Firth (1993), Bias Reduction in Maximum Likelihood Estimates.
 #' Biometrika, 80: 27-38.
 #' 
-#' \item Hunter, D. R. and M. S. Handcock (2006), Inference in curved
+#' Hunter, D. R. and M. S. Handcock (2006), Inference in curved
 #' exponential family models for networks. Journal of Computational and
 #' Graphical Statistics, 15: 565-583.
 #' 
-#' \item Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2010), A Steplength
+#' Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2010), A Steplength
 #' Algorithm for Fitting ERGMs, Penn State Department of Statistics Technical
-#' Report.  }
+#' Report.
 #' @export control.stergm
 control.stergm<-function(init.form=NULL,
                          init.diss=NULL,
                          init.method=NULL,
                          force.main = FALSE,                         
-
+                         MCMC.prop.form = ~discord + sparse,
+                         MCMC.prop.diss = ~discord + sparse,
                          MCMC.prop.weights.form="default",MCMC.prop.args.form=NULL,
                          MCMC.prop.weights.diss="default",MCMC.prop.args.diss=NULL,
-                         MCMC.init.maxedges=20000,
-                         MCMC.init.maxchanges=20000,
+                         MCMC.maxedges=Inf,
+                         MCMC.maxchanges=1000000,
                          MCMC.packagenames=c(),
                          
                          CMLE.MCMC.burnin = 1024*16,
                          CMLE.MCMC.interval = 1024,
-                         CMLE.control=NULL,
-                         CMLE.control.form=control.ergm(init=init.form, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop.weights=MCMC.prop.weights.form, MCMC.prop.args=MCMC.prop.args.form, MCMC.init.maxedges=MCMC.init.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
-                         CMLE.control.diss=control.ergm(init=init.diss, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop.weights=MCMC.prop.weights.diss, MCMC.prop.args=MCMC.prop.args.diss, MCMC.init.maxedges=MCMC.init.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
-
+                         CMLE.ergm=NULL,
+                         CMLE.form.ergm=control.ergm(init=init.form, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop=MCMC.prop.form, MCMC.prop.weights=MCMC.prop.weights.form, MCMC.prop.args=MCMC.prop.args.form, MCMC.maxedges=MCMC.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
+                         CMLE.diss.ergm=control.ergm(init=init.diss, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop=MCMC.prop.diss, MCMC.prop.weights=MCMC.prop.weights.diss, MCMC.prop.args=MCMC.prop.args.diss, MCMC.maxedges=MCMC.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
                          CMLE.NA.impute=c(),
                          CMLE.term.check.override=FALSE,
                          
@@ -351,13 +360,12 @@ control.stergm<-function(init.form=NULL,
                          
                          SAN.maxit=4,
                          SAN.nsteps.times=8,
-                         SAN.control=control.san(
+                         SAN=control.san(
                            term.options=term.options,
                            SAN.maxit=SAN.maxit,
+                           SAN.prop=MCMC.prop.form,
                            SAN.prop.weights=MCMC.prop.weights.form,
                            SAN.prop.args=MCMC.prop.args.form,
-                           SAN.init.maxedges=MCMC.init.maxedges,
-                           SAN.max.maxedges=Inf,
 
                            SAN.nsteps=round(sqrt(EGMME.MCMC.burnin.min*EGMME.MCMC.burnin.max))*SAN.nsteps.times,
 
@@ -427,18 +435,35 @@ control.stergm<-function(init.form=NULL,
                          seed=NULL,
                          parallel=0,
                          parallel.type=NULL,
-                         parallel.version.check=TRUE){
+                         parallel.version.check=TRUE,
+                         ...){
 
   if(!is.null(MCMC.burnin) || !is.null(MCMC.burnin.mul)) stop("Control parameters MCMC.burnin and MCMC.burnin.mul are no longer used. See help for EGMME.MCMC.burnin.min, EGMME.MCMC.burnin.max, EGMME.MCMC.burnin.pval, EGMME.MCMC.burnin.pval, and CMLE.MCMC.burnin and CMLE.MCMC.interval for their replacements.")
 
+  old.controls <- list(SAN.control="SAN",
+                       CMLE.ergm="CMLE.ergm",
+                       CMLE.form.ergm="CMLE.form.ergm",
+                       CMLE.diss.ergm="CMLE.diss.ergm"
+                       )
+
   match.arg.pars=c("EGMME.main.method","SA.refine")
 
-  if(!is.null(CMLE.control)) CMLE.control.form <- CMLE.control.diss <- CMLE.control
-  
+  if(!is.null(CMLE.ergm)) CMLE.form.ergm <- CMLE.diss.ergm <- CMLE.ergm
+
   control<-list()
   formal.args<-formals(sys.function())
+  formal.args[["..."]]<-NULL
   for(arg in names(formal.args))
     control[arg]<-list(get(arg))
+
+  for(arg in names(list(...))){
+    if(!is.null(old.controls[[arg]])){
+      warning("Passing ",arg," to control.stergm(...) is deprecated and may be removed in a future version. Specify it as control.ergm(",old.controls[[arg]],"=...) instead.")
+      control[old.controls[[arg]]]<-list(list(...)[[arg]])
+    }else{
+      stop("Unrecognized control parameter: ",arg,".")
+    }
+  }
 
   for(arg in match.arg.pars)
     control[arg]<-list(match.arg(control[[arg]][1],eval(formal.args[[arg]])))

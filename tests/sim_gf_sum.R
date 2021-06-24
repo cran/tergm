@@ -1,12 +1,12 @@
-#  File tests/sim_gf_sum.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/sim_gf_sum.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 library(tergm)
 
 logit<-function(p)log(p/(1-p))
@@ -28,10 +28,7 @@ simtest <- function(S, edges, dur, n, dir=FALSE, bip=0){
   g0<-network.initialize(n, dir=dir, bipartite=bip)
   g0 %n% "dc" <- dc
   g0 %n% "time" <- 0
-  g0 %n% "lasttoggle" <- -1-rgeom(network.dyadcount(g0),1/4)
 
-
-  
   dyads <- network.dyadcount(g0)
   density<-edges/dyads
   
@@ -39,20 +36,26 @@ simtest <- function(S, edges, dur, n, dir=FALSE, bip=0){
   
   # Get a reasonably close starting network.
   g1<-san(g0~edges,target.stats=target.stats,verbose=TRUE)
+
+  g1 %n% "lasttoggle" <- cbind(as.edgelist(g1), -rgeom(network.edgecount(g1),1/4))
   
   print(coef.form)
   print(coef.diss)
   
   # Simulate. Starting from an ordinary network:
-  dynsim<-simulate(g1,formation=~edges,dissolution=~edges,coef.form=coef.form,coef.diss=coef.diss,time.slices=S,verbose=TRUE,monitor=~edgecov("dc")+edgecov.ages("dc"))
+  dynsim<-simulate(g1 ~ Form(~edges) + Persist(~edges),coef=c(coef.form,coef.diss),time.slices=S,verbose=TRUE,monitor=~edgecov("dc")+edgecov.ages("dc"), dynamic=TRUE)
+  
+  sim.stats <- attr(dynsim, "stats")
   
   # Resuming from a networkDynamic:
-  dynsim2<-simulate(dynsim,formation=~edges,dissolution=~edges,coef.form=coef.form,coef.diss=coef.diss,time.slices=S,verbose=TRUE,monitor=~edgecov("dc")+edgecov.ages("dc"))
+  dynsim2<-simulate(dynsim ~ Form(~edges) + Persist(~edges),coef=c(coef.form,coef.diss),time.slices=S,verbose=TRUE,monitor=~edgecov("dc")+edgecov.ages("dc"), dynamic=TRUE)
+  
+  sim.stats <- rbind(sim.stats, attr(dynsim2, "stats"))
   
   # Resuming from a resumed networkDynamic:
-  dynsim3<-simulate(dynsim2,formation=~edges,dissolution=~edges,coef.form=coef.form,coef.diss=coef.diss,time.slices=S,verbose=TRUE,monitor=~edgecov("dc")+edgecov.ages("dc"))
+  dynsim3<-simulate(dynsim2 ~ Form(~edges) + Persist(~edges),coef=c(coef.form,coef.diss),time.slices=S,verbose=TRUE,monitor=~edgecov("dc")+edgecov.ages("dc"), dynamic=TRUE)
 
-  sim.stats <- attr(dynsim3,"stats")
+  sim.stats <- rbind(sim.stats, attr(dynsim3, "stats"))
   
   # Replay the simulation using a networkDynamic:
   gf1.stats <- as.matrix(tergm.godfather(dynsim3~edgecov("dc")+edgecov.ages("dc"), start=0, end=S*3))

@@ -1,12 +1,12 @@
-#  File R/InitErgmProposal.DynMoME.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/InitErgmProposal.DynMoME.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 #===================================================================
 # This file contains the 5 following MHP initializers, each
 # prepended with 'InitErgmProposal.'  All of these functions may also be
@@ -15,22 +15,21 @@
 #      <dissolution>
 #===================================================================
 
-InitErgmProposal.formation <- function(arguments, nw, model) {
-  proposal <- list(name = "Formation", inputs=NULL)
+InitErgmProposal.discordTNT <- function(arguments, nw, ...) {
+  discordance_fraction <- NVL(arguments$discordance_fraction, 1/2)
+  if(!is.numeric(discordance_fraction) || length(discordance_fraction) != 1 || discordance_fraction <= 0 || discordance_fraction >= 1) {
+    ergm_Init_abort("Argument ", sQuote("discordance_fraction"), " to ", sQuote("discordTNT"), " must be a number strictly between 0 and 1.")
+  }
+  
+  proposal <- list(name = "discordTNT", inputs=NULL, auxiliaries = ~.lasttoggle, discordance_fraction = discordance_fraction)
   proposal
 }
 
-InitErgmProposal.formationTNT <- function(arguments, nw, model) {
-  proposal <- list(name = "FormationTNT", inputs=NULL)
-  proposal
-}
-
-InitErgmProposal.dissolution <- function(arguments, nw, model) {
-  proposal <- list(name = "Dissolution", inputs=NULL)
-  proposal
-}
-
-InitErgmProposal.dissolutionTNT <- function(arguments, nw, model) {
-  proposal <- list(name = "DissolutionTNT", inputs=NULL)
+InitErgmProposal.discordBDStratTNT <- function(arguments, nw, ...) {
+  # Work around CRAN's ::: warning.
+  InitErgmProposal.BDStratTNT <- eval(locate_prefixed_function("BDStratTNT", "InitErgmProposal", "Metropolis-Hastings proposal"))
+  proposal <- InitErgmProposal.BDStratTNT(arguments, nw, ...)
+  proposal$name <- "discordBDStratTNT"
+  proposal$auxiliaries <- ~.lasttoggle
   proposal
 }

@@ -1,33 +1,24 @@
-#  File tests/degree.mean.age.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/degree.mean.age.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 library(statnet.common)
-opttest({
+#opttest({
 library(tergm)
 set.seed(0)
 logit<-function(p)log(p/(1-p))
 
-# NB:  duration.matrix function no longer exists in ergm package
-#print.sim.stats<-function(dynsim,m,d){
-#  t.score<-function(x,m) (mean(x)-m)/sqrt(apply(cbind(x),2,var)/effectiveSize(mcmc(x)))
-#  target.stats.sim<-apply(dynsim$stats.form,2,mean)
-#  durations<-duration.matrix(dynsim)$duration
-#  cat('Edge count:\n   Target:',m,', Simulated:',target.stats.sim,', t:', t.score(dynsim$stats.form,m) ,'\n')
-#  cat('Duration:\n   Target:',d,', Simulated:',mean(durations),', t:', t.score(durations,d) ,'\n')
-#}
-
 coef.form.f<-function(coef.diss,density) -log(((1+exp(coef.diss))/(density/(1-density)))-1)
 
-S<-10000
+S<-300
 
-n<-100
-target.stats<-edges<-100
+n<-40
+target.stats<-edges<-40
 duration<-12
 coef.diss<-logit(1-1/duration)
 
@@ -41,16 +32,17 @@ cat("\nUndirected:\n")
 
 g0<-network.initialize(n,dir=FALSE)
 
-g0 %v% "a" <- rep(1:2, c(20,40))
+g0 %v% "a" <- rep(1:2, c(1,3)/4*n)
 
 print(coef.form)
 print(coef.diss)
 
 # Simulate from the fit.
-dynsim<-simulate(g0,formation=~edges,dissolution=~edges,coef.form=coef.form,coef.diss=coef.diss,time.burnin=S, time.slices=S,verbose=TRUE,output="stats",
+dynsim<-simulate(g0 ~ Form(~edges) + Persist(~edges),coef=c(coef.form,coef.diss),time.burnin=S, time.slices=S,verbose=TRUE,output="stats",
                  monitor=~edges+mean.age
                  +degree.mean.age(1:3)+degrange.mean.age(1:2,3:4)+degrange.mean.age(1:2)
-                 +degree.mean.age(1:3,"a")+degrange.mean.age(1:2,3:4,"a")+degrange.mean.age(1:2,by="a")
+                 +degree.mean.age(1:3,"a")+degrange.mean.age(1:2,3:4,"a")+degrange.mean.age(1:2,by="a"), dynamic=TRUE,
+                 constraints=~.
                  )
 
 dynsim.dup <- duplicated(as.data.frame(t(dynsim)))
@@ -69,4 +61,4 @@ if(test$p.value < 0.001){
 
 #print.sim.stats(dynsim,target.stats,duration)
 #dynsim<-simulate(g0,formation=~edges,dissolution=~edges,coef.form=coef.form,coef.diss=coef.diss,time.slices=S,verbose=TRUE,statsonly=TRUE,monitor=~degrange(0:2,2:4,"a"))
-}, "degree mean age terms simulation")
+#}, "degree mean age terms simulation")

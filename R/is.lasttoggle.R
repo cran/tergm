@@ -1,60 +1,50 @@
-#  File R/is.lasttoggle.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/is.lasttoggle.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 ###############################################################################
 # is.lasttoggle function tests whether a nw object, with the inherited model 
 # info requires duration information. 
 ###############################################################################
-is.lasttoggle <- function(nw,formation=NULL,dissolution=NULL,monitor=NULL,target=NULL){
-  
+
+#' @rdname lasttoggle
+#' @name lasttoggle
+#' @title Lasttoggle
+#' 
+#' @description A data structure used by \code{tergm} for tracking of limited information
+#'                about dyad edge histories.
+#' 
+#' @details The \code{tergm} package handles durational information attached to
+#'            \code{\link{network}} objects by way of the \code{time} and 
+#'            \code{lasttoggle} network attributes.  The \code{lasttoggle} data
+#'            structure is a 3-column matrix; the first two columns are tails 
+#'            and heads (respectively) of dyads, and the third column is the last
+#'            time at which the dyad was toggled.  The default last toggle time
+#'            is \code{-INT_MAX/2}.  Last toggle times for non-edges are 
+#'            periodically cleared in the C code.  The \code{time} network 
+#'            attribute is simply an integer, and together with the 
+#'            \code{lasttoggle} data it determines the age of an extant
+#'            tie as \code{time + 1} minus the last toggle time for that dyad.
+#'            The default value for \code{time} is 0. 
+NULL
+
+is.lasttoggle <- function(nw, formation=NULL, dissolution=NULL, monitor=NULL, targets=NULL) {  
   if(!is.null(formation))
-    formation<-nonsimp_update.formula(formation,nw~., from.new="nw")
+    formation <- nonsimp_update.formula(formation, nw~., from.new="nw")
   
   if(!is.null(dissolution))  
-    dissolution<-nonsimp_update.formula(dissolution,nw~., from.new="nw")
+    dissolution <- nonsimp_update.formula(dissolution, nw~., from.new="nw")
+
+  if(is(monitor, "formula"))
+    monitor <- nonsimp_update.formula(monitor, nw~., from.new="nw")
+     
+  if(is(targets, "formula"))
+    targets <- nonsimp_update.formula(targets, nw~., from.new="nw")
   
-  if(!is.null(monitor)){
-    
-    unset.offset.call <- function(object){
-      if(inherits(object,"call") && object[[1]]=="offset")
-        object[[2]]
-      else
-        object
-    }
-    
-    if(is.character(monitor)){
-      monitor <- switch(monitor,
-          formation = formation,
-          dissolution = dissolution,
-          all = append_rhs.formula(~nw, unique(lapply(c(list_rhs.formula(formation),list_rhs.formula(dissolution)), unset.offset.call)))
-      )
-    }
-    
-    if(!is.null(monitor)) 
-      monitor <- nonsimp_update.formula(monitor,nw~., from.new="nw")
-  }
-  
-  
-  if(!is.null(target)){
-    if(is.character(targets)){
-      targets <- switch(targets,
-          formation = formation,
-          dissolution = dissolution)}
-      
-      targets <- nonsimp_update.formula(targets,nw~., from.new="nw")
-    }
-  
-  
-  
-    duration.dependent <- if(is.durational(formation) || is.durational(dissolution)|| is.durational(monitor))
-        {1} else {0}
-    
-    duration.dependent
-    
-  }
+  as.integer(is.durational(formation) || is.durational(dissolution) || is.durational(monitor) || is.durational(targets))
+}

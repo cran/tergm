@@ -1,23 +1,23 @@
-#  File tests/dynamic_MLE.R in package tergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/dynamic_MLE.R in package tergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2008-2020 Statnet Commons
-#######################################################################
+#  Copyright 2008-2021 Statnet Commons
+################################################################################
 library(tergm)
 options(tergm.eval.loglik=FALSE)
 
-tolerance<-0.05
+tolerance<-3
 n<-10
 m<-6
 theta<--1.5
 
-z.error <- function(truth, fit){
-  if(truth==coef(fit)) 0 # Infinite case
-  else abs(truth-coef(fit))/sqrt(diag(vcov(fit)))
+z.error <- function(truth, est, variance){
+  if(abs(truth-est)<1e-6) 0 # Infinite case
+  else abs(truth-est)/sqrt(variance)
 }
 
 logit<-function(p) log(p/(1-p))
@@ -30,6 +30,14 @@ diss.mle<-function(y0,y1){
   -logit(network.edgecount(y0-y1,na.omit=TRUE)/(network.edgecount(y0-is.na(y1))))
 }
 
+cross.mle<-function(y0,y1){
+  logit(network.edgecount(y1, na.omit=TRUE)/network.dyadcount(y1, na.omit=TRUE))
+}
+
+change.mle<-function(y0,y1){
+  logit(network.edgecount((y0-y1)|(y1-y0), na.omit=TRUE)/network.dyadcount(y1, na.omit=TRUE))
+}
+
 do.run <- function(dir, bip=FALSE, prop.weights="default"){
 if(bip){ # Extreme theta creates networks with too few ties to properly test.
   theta <- theta/2
@@ -37,38 +45,77 @@ if(bip){ # Extreme theta creates networks with too few ties to properly test.
   
 y0<-network.initialize(n,dir=dir,bipartite=bip)
 set.seed(321)
-y0<-simulate(y0~edges, coef=theta, control=control.simulate(MCMC.burnin=n^2*2))
+y0<-simulate(y0~edges, coef=theta, control=control.simulate(MCMC.burnin=n^2*2), dynamic=FALSE)
 
 cat("Complete data:\n")
 
 set.seed(123)
-y1<-simulate(y0~edges, coef=theta, control=control.simulate(MCMC.burnin=n^2*2))
+y1<-simulate(y0~edges, coef=theta, control=control.simulate(MCMC.burnin=n^2*2), dynamic=FALSE)
 
 # Force CMPLE
 set.seed(543)
-fit<-stergm(list(y0,y1), formation=~edges, dissolution=~edges, estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+fit<-tergm(list(y0,y1) ~ Form(~edges) + Persist(~edges), estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
 
-stopifnot(fit$estimate=="CMPLE", fit$formation.fit$estimate=="MPLE", fit$dissolution.fit$estimate=="MPLE")
-stopifnot(z.error(form.mle(y0,y1), fit$formation.fit) <= tolerance)
-stopifnot(z.error(diss.mle(y0,y1), fit$dissolution.fit) <= tolerance)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(form.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+stopifnot(z.error(diss.mle(y0,y1), coef(fit)[2], vcov(fit, sources="estimation")[2,2]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ edges, estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(cross.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ Cross(~edges), estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(cross.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ Change(~edges), estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(change.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
 
 # Autodetected CMPLE
 set.seed(543)
-fit<-stergm(list(y0,y1), formation=~edges, dissolution=~edges, estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+fit<-tergm(list(y0,y1) ~ Form(~edges) + Persist(~edges), estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
 
-stopifnot(fit$estimate=="CMLE", is.null(fit$formation.fit$sample), is.null(fit$dissolution.fit$sample))
-stopifnot(z.error(form.mle(y0,y1), fit$formation.fit) <= tolerance)
-stopifnot(z.error(diss.mle(y0,y1), fit$dissolution.fit) <= tolerance)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(form.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+stopifnot(z.error(diss.mle(y0,y1), coef(fit)[2], vcov(fit, sources="estimation")[2,2]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ edges, estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ Cross(~edges), estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ Change(~edges), estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(change.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
 
 # Force CMLE
 for(prop.weight in prop.weights){
 cat("====",prop.weight,"====\n")
-set.seed(544)
-fit<-stergm(list(y0,y1), formation=~edges, dissolution=~edges, estimate="CMLE", control=control.stergm(CMLE.control=control.ergm(force.main=TRUE, MCMC.prop.weights=prop.weight)), times=c(1,2), eval.loglik=FALSE)
 
-stopifnot(fit$estimate=="CMLE", fit$formation.fit$estimate=="MLE", fit$dissolution.fit$estimate=="MLE")
-stopifnot(z.error(form.mle(y0,y1), fit$formation.fit) <= tolerance)
-stopifnot(z.error(diss.mle(y0,y1), fit$dissolution.fit) <= tolerance)
+ctrl <- control.tergm(CMLE.ergm=control.ergm(force.main=TRUE, MCMC.prop.weights=prop.weight))
+
+set.seed(543)
+fit<-tergm(list(y0,y1) ~ Form(~edges) + Persist(~edges), estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(form.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+stopifnot(z.error(diss.mle(y0,y1), coef(fit)[2], vcov(fit, sources="estimation")[2,2]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ edges, estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ Cross(~edges), estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1) ~ Change(~edges), estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(change.mle(y0,y1), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
 }
 
 cat("Missing data:\n")
@@ -81,29 +128,70 @@ y1m[1,m+1] <- NA
 
 # Force CMPLE
 set.seed(765)
-fit<-stergm(list(y0,y1m), formation=~edges, dissolution=~edges, estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+fit<-tergm(list(y0,y1m) ~ Form(~edges) + Persist(~edges), estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
 
-stopifnot(fit$estimate=="CMPLE", fit$formation.fit$estimate=="MPLE", fit$dissolution.fit$estimate=="MPLE")
-stopifnot(z.error(form.mle(y0,y1m), fit$formation.fit) <= tolerance)
-stopifnot(z.error(diss.mle(y0,y1m), fit$dissolution.fit) <= tolerance)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(form.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+stopifnot(z.error(diss.mle(y0,y1m), coef(fit)[2], vcov(fit, sources="estimation")[2,2]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ edges, estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(cross.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ Cross(~edges), estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(cross.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ Change(~edges), estimate="CMPLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMPLE")
+stopifnot(z.error(change.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
 
 # Autodetected CMPLE
 set.seed(765)
-fit<-stergm(list(y0,y1m), formation=~edges, dissolution=~edges, estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+fit<-tergm(list(y0,y1m) ~ Form(~edges) + Persist(~edges), estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
 
-stopifnot(fit$estimate=="CMLE", is.null(fit$formation.fit$sample), is.null(fit$dissolution.fit$sample))
-stopifnot(z.error(form.mle(y0,y1m), fit$formation.fit) <= tolerance)
-stopifnot(z.error(diss.mle(y0,y1m), fit$dissolution.fit) <= tolerance)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(form.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+stopifnot(z.error(diss.mle(y0,y1m), coef(fit)[2], vcov(fit, sources="estimation")[2,2]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ edges, estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ Cross(~edges), estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ Change(~edges), estimate="CMLE", times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(change.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
 
 # Force CMLE
 for(prop.weight in prop.weights){
 cat("====",prop.weight,"====\n")
-set.seed(234)
-fit<-stergm(list(y0,y1m), formation=~edges, dissolution=~edges, estimate="CMLE", control=control.stergm(CMLE.control=control.ergm(force.main=TRUE, MCMC.prop.weights=prop.weight)), times=c(1,2), eval.loglik=FALSE)
 
-stopifnot(fit$estimate=="CMLE", fit$formation.fit$estimate=="MLE", fit$dissolution.fit$estimate=="MLE")
-stopifnot(z.error(form.mle(y0,y1m), fit$formation.fit) <= tolerance)
-stopifnot(z.error(diss.mle(y0,y1m), fit$dissolution.fit) <= tolerance)
+ctrl <- control.tergm(CMLE.ergm=control.ergm(force.main=TRUE, MCMC.prop.weights=prop.weight))
+
+set.seed(234)
+fit<-tergm(list(y0,y1m) ~ Form(~edges) + Persist(~edges), estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(form.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+stopifnot(z.error(diss.mle(y0,y1m), coef(fit)[2], vcov(fit, sources="estimation")[2,2]) <= tolerance)
+
+
+fit<-tergm(list(y0,y1m) ~ edges, estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ Cross(~edges), estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(cross.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
+fit<-tergm(list(y0,y1m) ~ Change(~edges), estimate="CMLE", control=ctrl, times=c(1,2), eval.loglik=FALSE)
+stopifnot(fit$estimate=="CMLE")
+stopifnot(z.error(change.mle(y0,y1m), coef(fit)[1], vcov(fit, sources="estimation")[1,1]) <= tolerance)
+
 }
 }
 

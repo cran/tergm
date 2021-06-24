@@ -10,16 +10,16 @@ control.simulate.network(
   MCMC.burnin.max = 1e+05,
   MCMC.burnin.pval = 0.5,
   MCMC.burnin.add = 1,
-  MCMC.burnin = NULL,
-  MCMC.burnin.mul = NULL,
+  MCMC.prop.form = ~discord + sparse,
+  MCMC.prop.diss = ~discord + sparse,
   MCMC.prop.weights.form = "default",
-  MCMC.prop.args.form = NULL,
   MCMC.prop.weights.diss = "default",
+  MCMC.prop.args.form = NULL,
   MCMC.prop.args.diss = NULL,
-  MCMC.init.maxedges = 20000,
-  MCMC.packagenames = c(),
+  MCMC.maxedges = Inf,
+  MCMC.maxchanges = 1e+06,
   term.options = NULL,
-  MCMC.init.maxchanges = 1e+06
+  MCMC.packagenames = c()
 )
 
 control.simulate.stergm(
@@ -27,70 +27,59 @@ control.simulate.stergm(
   MCMC.burnin.max = NULL,
   MCMC.burnin.pval = NULL,
   MCMC.burnin.add = NULL,
-  MCMC.burnin = NULL,
-  MCMC.burnin.mul = NULL,
+  MCMC.prop.form = NULL,
+  MCMC.prop.diss = NULL,
   MCMC.prop.weights.form = NULL,
-  MCMC.prop.args.form = NULL,
   MCMC.prop.weights.diss = NULL,
+  MCMC.prop.args.form = NULL,
   MCMC.prop.args.diss = NULL,
-  MCMC.init.maxedges = NULL,
-  MCMC.packagenames = NULL,
+  MCMC.maxedges = NULL,
+  MCMC.maxchanges = NULL,
   term.options = NULL,
-  MCMC.init.maxchanges = NULL
+  MCMC.packagenames = NULL
 )
 }
 \arguments{
-\item{MCMC.burnin.min, MCMC.burnin.max, MCMC.burnin.pval, MCMC.burnin.add}{Number of Metropolis-Hastings steps per phase (formation and
-dissolution) per time step used in simulation. By default, this
+\item{MCMC.burnin.min, MCMC.burnin.max, MCMC.burnin.pval, MCMC.burnin.add}{Number of Metropolis-Hastings steps per time step used in simulation. By default, this
 is determined adaptively by keeping track of increments in the
 Hamming distance between the transitioned-from network and the
-network being sampled (formation network or dissolution
-network). Once \code{MCMC.burnin.min} steps have elapsed, the
+network being sampled. Once \code{MCMC.burnin.min} steps have elapsed, the
 increments are tested against 0, and when their average number
 becomes statistically indistinguishable from 0 (with the p-value
 being greater than \code{MCMC.burnin.pval}), or
 \code{MCMC.burnin.max} steps are proposed, whichever comes first,
 the simulation is stopped after an additional
-\code{MCMC.burnin.add} times the number of elapsed steps had been
+\code{MCMC.burnin.add} times the number of elapsed steps have been
 taken.  (Stopping immediately would bias the sampling.)
 
-To use a fixed number of steps, set both \code{MCMC.burnin.min}
-and \code{MCMC.burnin.max} to the desired number of steps.}
+To use a fixed number of steps, set \code{MCMC.burnin.min}
+and \code{MCMC.burnin.max} to the same value.}
 
-\item{MCMC.burnin, MCMC.burnin.mul}{No longer used. See
-\code{MCMC.burnin.min}, \code{MCMC.burnin.max},
-\code{MCMC.burnin.pval}, \code{MCMC.burnin.pval}, and
-\code{MCMC.burnin.add}.}
+\item{MCMC.prop.form}{Hints and/or constraints for selecting and initializing the proposal.}
 
-\item{MCMC.prop.weights.form, MCMC.prop.weights.diss}{Specifies the
-proposal distribution used in the MCMC Metropolis-Hastings
-algorithm for formation and dissolution, respectively. Possible
-choices are \code{"TNT"} or \code{"random"}; the
-\code{"default"}.  The \code{TNT} (tie / no tie) option puts
-roughly equal weight on selecting a dyad with or without a tie as
-a candidate for toggling, whereas the \code{random} option puts
-equal weight on all possible dyads, though the interpretation of
-\code{random} may change according to the constraints in place.
-When no constraints are in place, the default is TNT, which
-appears to improve Markov chain mixing particularly for networks
-with a low edge density, as is typical of many realistic social
-networks.}
+\item{MCMC.prop.weights.form}{Specifies the proposal weighting scheme to
+be used in the MCMC Metropolis-Hastings algorithm.  Possible
+choices may be determined by calling \code{\link{ergm_proposal_table}}.}
 
-\item{MCMC.prop.args.form, MCMC.prop.args.diss}{An alternative,
+\item{MCMC.prop.weights.diss, MCMC.prop.args.diss, MCMC.prop.diss}{Ignored. These are included
+for backwards compatibility of calls to \code{control}
+functions only; they have no effect on \code{simulate} behavior.}
+
+\item{MCMC.prop.args.form}{An alternative,
 direct way of specifying additional arguments to proposals.}
 
-\item{MCMC.init.maxedges}{Maximum number of edges expected in
-network.}
+\item{MCMC.maxedges}{Maximum number of edges expected in network.}
+
+\item{MCMC.maxchanges}{Maximum number of changes for
+which to allocate space.}
+
+\item{term.options}{A list of additional arguments to be passed to term initializers.
+It can also be set globally via \code{options(ergm.term=list(...))}.}
 
 \item{MCMC.packagenames}{Names of packages in which to look for
 change statistic functions in addition to those
 autodetected. This argument should not be needed outside of very
 strange setups.}
-
-\item{term.options}{A list of additional arguments to be passed to term initializers. It can also be set globally via \code{option(ergm.term=list(...))}.}
-
-\item{MCMC.init.maxchanges}{Maximum number of toggles changes for
-which to allocate space.}
 }
 \value{
 A list with arguments as components.
@@ -102,6 +91,20 @@ Auxiliary function as user interface for fine-tuning STERGM simulation.
 This function is only used within a call to the \code{\link{simulate}}
 function.  See the \code{usage} section in \code{\link{simulate.stergm}} for
 details.
+
+These functions are included for backwards compatibility, and users are
+encouraged to use \code{control.simulate.tergm} or
+\code{control.simulate.formula.tergm} with the \code{\link{simulate.tergm}}
+family of functions instead.  When a
+\code{control.simulate.stergm} or \code{control.simulate.network} object
+is passed to one of the \code{\link{simulate.stergm}} functions,
+the corresponding \code{\link{simulate.tergm}} function is invoked,
+and uses the formation proposal control arguments, ignoring the
+dissolution proposal control arguments.
+
+Note:  The old \code{dissolution} formula in \code{stergm} represents
+tie persistence.  As a result it maps to the new \code{Persist()} operator
+in \code{tergm}, NOT the \code{Diss()} operator
 }
 \seealso{
 \code{\link{simulate.stergm}},
