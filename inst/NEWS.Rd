@@ -62,6 +62,31 @@
 %% }
 
 
+\section{Changes in version 4.0.2}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        Fixes to acommodate \code{\link[ergm:ergm-package]{ergm}}'s \code{BDStratTNT} API changes (which were not as backwards-compatible as hoped).
+      }
+      \item{
+        Better error checking in \code{\link[tergm]{simulate}()} calls.
+      }
+      \item{
+        Some memory leaks fixed.
+      }
+    }
+  }
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+        \code{\link{Cross}()} operator term now labels its coefficient names as such.
+      }
+    }
+  }
+}
+
+
 \section{Changes in version 4.0.1}{
     \subsection{NEW FEATURES}{
       \itemize{
