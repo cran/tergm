@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 tergm.EGMME.initialfit<-function(init, nw, model, formula, model.mon, formula.mon, control, verbose=FALSE){
 
@@ -62,7 +62,7 @@ tergm.EGMME.initialfit<-function(init, nw, model, formula, model.mon, formula.mo
       
       if(!all(model.pers$etamap$offsettheta)){ # This must mean that the two provisos above are satisfied.
         mean.age <- model.mon$target.stats[.do(param_names(model.mon))=="mean.age"]
-        init.pers <- log(mean.age+1)
+        init.pers <- log(mean.age-1)
         names(init.pers) <- "edges"
       }
       

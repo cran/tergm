@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 ###########################################################################
 # The <control.stergm> function allows the ergm fitting process to be tuned
@@ -68,14 +68,10 @@
 #' @param MCMC.prop.form Hints and/or constraints for selecting and initializing the proposal.
 #' @param MCMC.prop.weights.diss,MCMC.prop.args.diss,MCMC.prop.diss
 #'   Ignored.
-#' @param MCMC.maxedges Maximum number of edges for which to
-#'   allocate space.
+#' @template control_MCMC_maxedges
 #' @param MCMC.maxchanges Maximum number of changes in dynamic
 #'   network simulation for which to allocate space.
-#' @param MCMC.packagenames Names of packages in which to look for
-#'   change statistic functions in addition to those
-#'   autodetected. This argument should not be needed outside of very
-#'   strange setups.
+#' @template control_MCMC_packagenames
 #' @param CMLE.MCMC.burnin Burnin used in CMLE fitting.
 #' @param CMLE.MCMC.interval Number of Metropolis-Hastings steps
 #'   between successive draws when running MCMC MLE.
@@ -289,19 +285,9 @@
 #'   error somewhere in the optimization process will cause it to
 #'   restart with a smaller gain value. Otherwise, the process will
 #'   stop. This is mainly used for debugging
-#' @param term.options A list of additional arguments to be passed to term initializers. It can also be set globally via `option(ergm.term=list(...))`.
-#' @param seed Seed value (integer) for the random number generator.
-#'   See \code{\link[base]{set.seed}}
-#' @param parallel Number of threads in which to run the
-#'   sampling. Defaults to 0 (no parallelism). See the entry on
-#'   [parallel processing][ergm-parallel] for details and
-#'   troubleshooting.
-#' @param parallel.type API to use for parallel processing. Supported
-#'   values are \code{"MPI"} and \code{"PSOCK"}. Defaults to using the
-#'   \code{parallel} package default.
-#' @param parallel.version.check Logical: If TRUE, check that the
-#'   version of \code{\link[=ergm-package]{ergm}} running on the slave
-#'   nodes is the same as that running on the master node.
+#' @template term_options
+#' @template seed
+#' @template control_MCMC_parallel
 #' @param MCMC.burnin,MCMC.burnin.mul No longer used. See
 #'   \code{EGMME.MCMC.burnin.min}, \code{EGMME.MCMC.burnin.max},
 #'   \code{EGMME.MCMC.burnin.pval}, \code{EGMME.MCMC.burnin.pval},
@@ -346,8 +332,8 @@ control.stergm<-function(init.form=NULL,
                          CMLE.MCMC.burnin = 1024*16,
                          CMLE.MCMC.interval = 1024,
                          CMLE.ergm=NULL,
-                         CMLE.form.ergm=control.ergm(init=init.form, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop=MCMC.prop.form, MCMC.prop.weights=MCMC.prop.weights.form, MCMC.prop.args=MCMC.prop.args.form, MCMC.maxedges=MCMC.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
-                         CMLE.diss.ergm=control.ergm(init=init.diss, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop=MCMC.prop.diss, MCMC.prop.weights=MCMC.prop.weights.diss, MCMC.prop.args=MCMC.prop.args.diss, MCMC.maxedges=MCMC.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, force.main=force.main),
+                         CMLE.form.ergm=control.ergm(init=init.form, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop=MCMC.prop.form, MCMC.prop.weights=MCMC.prop.weights.form, MCMC.prop.args=MCMC.prop.args.form, MCMC.maxedges=MCMC.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, parallel.inherit.MT=parallel.inherit.MT, force.main=force.main),
+                         CMLE.diss.ergm=control.ergm(init=init.diss, MCMC.burnin=CMLE.MCMC.burnin, MCMC.interval=CMLE.MCMC.interval, MCMC.prop=MCMC.prop.diss, MCMC.prop.weights=MCMC.prop.weights.diss, MCMC.prop.args=MCMC.prop.args.diss, MCMC.maxedges=MCMC.maxedges, MCMC.packagenames=MCMC.packagenames, parallel=parallel, parallel.type=parallel.type, parallel.version.check=parallel.version.check, parallel.inherit.MT=parallel.inherit.MT, force.main=force.main),
                          CMLE.NA.impute=c(),
                          CMLE.term.check.override=FALSE,
                          
@@ -377,7 +363,8 @@ control.stergm<-function(init.form=NULL,
                            
                            parallel=parallel,
                            parallel.type=parallel.type,
-                           parallel.version.check=parallel.version.check),
+                           parallel.version.check=parallel.version.check,
+                           parallel.inherit.MT=FALSE),
 
                          SA.restarts=10,
                          
@@ -440,6 +427,7 @@ control.stergm<-function(init.form=NULL,
                          parallel=0,
                          parallel.type=NULL,
                          parallel.version.check=TRUE,
+                         parallel.inherit.MT=FALSE,
                          ...){
 
   if(!is.null(MCMC.burnin) || !is.null(MCMC.burnin.mul)) stop("Control parameters MCMC.burnin and MCMC.burnin.mul are no longer used. See help for EGMME.MCMC.burnin.min, EGMME.MCMC.burnin.max, EGMME.MCMC.burnin.pval, EGMME.MCMC.burnin.pval, and CMLE.MCMC.burnin and CMLE.MCMC.interval for their replacements.")

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 #========================================================================
 # This file contains the following 3 functions for simulating stergms
@@ -107,23 +107,12 @@
 #' @param nsim Number of replications (separate chains of networks) of the
 #' process to run and return. The \code{\link{networkDynamic}} method only
 #' supports \code{nsim=1}.
-#' @param seed Random number integer seed.  See \code{\link[base]{set.seed}}.
+#' @template seed
 #' @param coef.form Parameters for the formation model.
 #' @param coef.diss Parameters for the dissolution (persistence) model.
-#' @param constraints A one-sided formula specifying one or more constraints on
-#' the support of the distribution of the networks being modeled, using syntax
-#' similar to the \code{formula} argument. Multiple constraints may be given,
-#' separated by \dQuote{+} operators.  Together with the model terms in the
-#' formula and the reference measure, the constraints define the distribution
-#' of networks being modeled.
-#' 
-#' The default is \code{~.}, for an unconstrained model.
-#' 
-#' See the [ERGM constraints][ergm-constraints] documentation for the
-#' constraints implemented in the **[ergm][ergm-package]** package.
-#' Other packages may add their own constraints.
-#' 
-#' Note that not all possible combinations of constraints are supported.
+#'
+#' @template constraints
+#'
 #' @param monitor A one-sided formula specifying one or more terms whose
 #' value is to be monitored.  If \code{monitor} is specified as a character
 #' (one of \code{"formation"}, \code{"dissolution"}, and \code{"all"}) then
@@ -158,8 +147,7 @@
 #' use the \code{monitor} argument instead.  Note that if either \code{stats.form}
 #' or \code{stats.diss} is \code{TRUE}, all generative model statistics will be
 #' returned.
-#' @param verbose Logical: If \code{TRUE}, extra information is printed as the Markov
-#' chain progresses.
+#' @template verbose
 #' @param \dots Further arguments passed to or used by methods.
 #' @return Depends on the \code{output} argument.  See \code{\link{simulate.tergm}}
 #'         for details.  Note that some formation/dissolution separated

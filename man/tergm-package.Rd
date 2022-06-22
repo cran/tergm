@@ -33,17 +33,47 @@ dynamic models when only a cross-sectional network is available, provided
 some temporal information for it is available as well.
 
 This package aims to implement these and other ERGM-based models for network
-evoluation. At this time, it implements, via the \code{\link{tergm}}
+evolution. At this time, it implements, via the \code{\link{tergm}}
 function, a general framework for modeling tie dynamics in temporal networks
 with flexible model specification (including (S)TERGMs).  Estimation options
 include a conditional MLE (CMLE) approach for fitting to a series of
 networks and an Equilibrium Generalized Method of Moments Estimation (EGMME)
 for fitting to a single network with temporal information. For further
 development, see the referenced papers.
+}
+\section{Temporal model specification in \pkg{tergm}}{
+
+
+The operator terms implemented by \pkg{tergm} are \code{Form()},
+\code{Persist()}, \code{Diss()}, \code{Cross()}, and \code{Change()}.  These are used
+to specify how the \code{ergm} terms (\code{\link{ergmTerm}}) in a formula are
+evaluated across a network time-series.  Note, you cannot use one
+of these operators within another temporal, so
+\code{Cross(~Form(~edges))} is not a valid specification. (Generally,
+nesting these operators within other operators will often not work;
+nesting other operators within them will almost always work,
+however.)
+
+The durational terms are distinguished either by their name,
+\code{mean.age}, or their name extensions: \verb{<name>.ages},
+\verb{<name>.mean.age}, and \verb{<name>.age.interval}.  In contrast to
+their eponymous terms in \pkg{ergm}, these durational
+terms take into account the elapsed time since each (term-relevant) dyad in
+the network was last toggled.
+
+As currently implemented, the package does not support use of many
+durational terms during estimation, though it may work with some.
+But durational terms may be used as targets, monitors, or summary
+statistics.  The ability to use these terms in the estimation of
+models is under development.
+}
+
+\section{Compatibility with previous versions}{
+
 
 If you previously used the \code{\link[=stergm]{stergm()}} function in this package, please
 note that \code{\link[=stergm]{stergm()}} has been superceded by the new \code{\link{tergm}}
-function, and is likely to be deprecated in future releases.  The
+function, and has been deprecated.  The
 \code{dissolution} formula in \code{\link[=stergm]{stergm()}} maps to the new \code{Persist()}
 operator in the \code{\link[=tergm]{tergm()}} function, \strong{not} the \code{Diss()} operator.
 
@@ -51,6 +81,7 @@ For detailed information on how to download and install the software, go to
 the Statnet project website: \url{https://statnet.org}.  A tutorial, support
 newsgroup, references and links to further resources are provided there.
 }
+
 \references{
 Hanneke S, Fu W and Xing EP (2010). Discrete
 Temporal Models of Social Networks. \emph{Electronic Journal of Statistics},
@@ -72,11 +103,11 @@ University Department of Statistics Technical Report}, 2012(2012-01).
 
 Butts CT (2008).  \pkg{network}: A Package for Managing Relational
 Data in .  \emph{Journal of Statistical Software}, 24(2).
-\url{https://www.jstatsoft.org/v24/i02/}.
+\doi{10.18637/jss.v024.i02}
 
 Goodreau SM, Handcock MS, Hunter DR, Butts CT, Morris M (2008a).  A
 \pkg{statnet} Tutorial.  \emph{Journal of Statistical Software}, 24(8).
-\url{https://www.jstatsoft.org/v24/i08/}.
+\doi{10.18637/jss.v024.i08}
 
 Hunter, D. R. and Handcock, M. S. (2006) Inference in curved
 exponential family models for networks, \emph{Journal of Computational and
@@ -85,12 +116,12 @@ Graphical Statistics}, 15: 565-583
 Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008b).
 \pkg{ergm}: A Package to Fit, Simulate and Diagnose Exponential-Family
 Models for Networks.  \emph{Journal of Statistical Software}, 24(3).
-\url{https://www.jstatsoft.org/v24/i03/}.
+\doi{10.18637/jss.v024.i03}
 
 Morris M, Handcock MS, Hunter DR (2008).  Specification of
 Exponential-Family Random Graph Models: Terms and Computational Aspects.
 \emph{Journal of Statistical Software}, 24(4).
-\url{https://www.jstatsoft.org/v24/i04/}.
+\doi{10.18637/jss.v024.i04}
 }
 \keyword{models}
 \keyword{package}

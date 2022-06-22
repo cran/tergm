@@ -26,13 +26,13 @@ control.stergm(
     MCMC.prop.weights.form, MCMC.prop.args = MCMC.prop.args.form, MCMC.maxedges =
     MCMC.maxedges, MCMC.packagenames = MCMC.packagenames, parallel = parallel,
     parallel.type = parallel.type, parallel.version.check = parallel.version.check,
-    force.main = force.main),
+    parallel.inherit.MT = parallel.inherit.MT, force.main = force.main),
   CMLE.diss.ergm = control.ergm(init = init.diss, MCMC.burnin = CMLE.MCMC.burnin,
     MCMC.interval = CMLE.MCMC.interval, MCMC.prop = MCMC.prop.diss, MCMC.prop.weights =
     MCMC.prop.weights.diss, MCMC.prop.args = MCMC.prop.args.diss, MCMC.maxedges =
     MCMC.maxedges, MCMC.packagenames = MCMC.packagenames, parallel = parallel,
     parallel.type = parallel.type, parallel.version.check = parallel.version.check,
-    force.main = force.main),
+    parallel.inherit.MT = parallel.inherit.MT, force.main = force.main),
   CMLE.NA.impute = c(),
   CMLE.term.check.override = FALSE,
   EGMME.main.method = c("Gradient-Descent"),
@@ -50,7 +50,7 @@ control.stergm(
     MCMC.prop.args.form, SAN.nsteps = round(sqrt(EGMME.MCMC.burnin.min *
     EGMME.MCMC.burnin.max)) * SAN.nsteps.times, SAN.packagenames = MCMC.packagenames,
     parallel = parallel, parallel.type = parallel.type, parallel.version.check =
-    parallel.version.check),
+    parallel.version.check, parallel.inherit.MT = FALSE),
   SA.restarts = 10,
   SA.burnin = 1000,
   SA.plot.progress = FALSE,
@@ -95,6 +95,7 @@ control.stergm(
   parallel = 0,
   parallel.type = NULL,
   parallel.version.check = TRUE,
+  parallel.inherit.MT = FALSE,
   ...
 )
 }
@@ -141,16 +142,14 @@ maximum pseudolikelihood estimation.}
 
 \item{MCMC.prop.weights.diss, MCMC.prop.args.diss, MCMC.prop.diss}{Ignored.}
 
-\item{MCMC.maxedges}{Maximum number of edges for which to
-allocate space.}
+\item{MCMC.maxedges}{The maximum number of edges that may occur during the MCMC sampling. If this number is exceeded at any time, sampling is stopped immediately.}
 
 \item{MCMC.maxchanges}{Maximum number of changes in dynamic
 network simulation for which to allocate space.}
 
-\item{MCMC.packagenames}{Names of packages in which to look for
-change statistic functions in addition to those
-autodetected. This argument should not be needed outside of very
-strange setups.}
+\item{MCMC.packagenames}{Names of packages in which to look for change
+statistic functions in addition to those autodetected. This argument should
+not be needed outside of very strange setups.}
 
 \item{CMLE.MCMC.burnin}{Burnin used in CMLE fitting.}
 
@@ -415,23 +414,25 @@ error somewhere in the optimization process will cause it to
 restart with a smaller gain value. Otherwise, the process will
 stop. This is mainly used for debugging}
 
-\item{term.options}{A list of additional arguments to be passed to term initializers. It can also be set globally via \code{option(ergm.term=list(...))}.}
+\item{term.options}{A list of additional arguments to be passed to term initializers. See \code{\link[=term.options]{? term.options}}.}
 
-\item{seed}{Seed value (integer) for the random number generator.
-See \code{\link[base]{set.seed}}}
+\item{seed}{Seed value (integer) for the random number generator.  See
+\code{\link[base]{set.seed}}.}
 
-\item{parallel}{Number of threads in which to run the
-sampling. Defaults to 0 (no parallelism). See the entry on
-\link[=ergm-parallel]{parallel processing} for details and
-troubleshooting.}
+\item{parallel}{Number of threads in which to run the sampling. Defaults to
+0 (no parallelism). See the entry on \link[=ergm-parallel]{parallel processing}
+for details and troubleshooting.}
 
-\item{parallel.type}{API to use for parallel processing. Supported
-values are \code{"MPI"} and \code{"PSOCK"}. Defaults to using the
-\code{parallel} package default.}
+\item{parallel.type}{API to use for parallel processing. Supported values
+are \code{"MPI"} and \code{"PSOCK"}. Defaults to using the \code{parallel}
+package with PSOCK clusters. See \code{\link{ergm-parallel}}}
 
-\item{parallel.version.check}{Logical: If TRUE, check that the
-version of \code{\link[=ergm-package]{ergm}} running on the slave
-nodes is the same as that running on the master node.}
+\item{parallel.version.check}{Logical: If TRUE, check that the version of
+\code{\link[=ergm-package]{ergm}} running on the slave nodes is the same as
+that running on the master node.}
+
+\item{parallel.inherit.MT}{Logical: If TRUE, slave nodes and
+processes inherit the \code{\link[=set.MT_terms]{set.MT_terms()}} setting.}
 
 \item{\dots}{Additional arguments, passed to other functions This argument
 is helpful because it collects any control parameters that have been

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 
 stopifnot_dynamic <- function(nw, ..., dynamic=FALSE, .netseries.OK=FALSE){
@@ -19,6 +19,23 @@ stopifnot_dynamic <- function(nw, ..., dynamic=FALSE, .netseries.OK=FALSE){
   }
 }
 
+#' @templateVar name Form
+#' @title The Formation Operator Term
+#' @description The Formation Operator Term
+#' @details This term accepts a model formula
+#'   and produces the corresponding model for the post-formation network:
+#'   effectively a network containing both previous time step's ties and ties just formed,
+#'   the union of the previous and current network. This is the equivalent of the
+#'   old-style `formation` model.
+#'
+#' @usage
+#' # binary: Form(formula)
+#' @template ergmTerm-formula
+#'
+#' @template ergmTerm-general
+#'
+#' @concept operator
+#' @concept durational
 `InitErgmTerm.Form (dynamic)` <- function(nw, arglist,  ...) {
   stopifnot_dynamic(nw, .netseries.OK=TRUE, ...)
   a <- check.ErgmTerm(nw, arglist,
@@ -53,7 +70,28 @@ InitErgmTerm..union.lt.net<-function(nw, arglist, ...) {
        dependence=FALSE)
 }
 
-
+#' @templateVar name Persist
+#' @title The Persistence Operator Term
+#' @description The Persistence Operator Term
+#' @details This term accepts a model formula
+#'   and produces the corresponding model for the
+#'   post-dissolution/persistence network: effectively the network containing
+#'   ties that persisted since the last time step.
+#'
+#'   This is the equivalent of the old-style `dissolution` model. So
+#'   a larger positive coefficient for `Persist()` operator means
+#'   less dissolution. It
+#'   produces the same results as the new `Diss()` operator, except the
+#'   signs of the coefficients are negated.
+#'
+#' @usage
+#' # binary: Persist(formula)
+#' @template ergmTerm-formula
+#'
+#' @template ergmTerm-general
+#'
+#' @concept operator
+#' @concept durational
 `InitErgmTerm.Persist (dynamic)` <- function(nw, arglist,  ...) {
   stopifnot_dynamic(nw, .netseries.OK=TRUE, ...)
   a <- check.ErgmTerm(nw, arglist,
@@ -73,6 +111,25 @@ InitErgmTerm..union.lt.net<-function(nw, arglist, ...) {
                list(emptynwstats=NULL)))
 }
 
+#' @templateVar name Diss
+#' @title The Dissolution Operator Term
+#' @description The Dissolution Operator Term
+#' @details This term accepts a model formula
+#'   and produces the corresponding model for the post-dissolution
+#'   network (same as `Persist()` ), but with all statistics negated.
+#'
+#'   Note: This is not the equivalent of the old style `dissolution` model,
+#'   because the signs of the coefficients are reversed. So a larger positive
+#'   coefficient for `Diss()` operator means more dissolution.
+#'
+#' @usage
+#' # binary: Diss(formula)
+#' @template ergmTerm-formula
+#'
+#' @template ergmTerm-general
+#'
+#' @concept operator
+#' @concept durational
 `InitErgmTerm.Diss (dynamic)` <- function(nw, arglist,  ...) {
   stopifnot_dynamic(nw, .netseries.OK=TRUE, ...)
   a <- check.ErgmTerm(nw, arglist,
@@ -107,7 +164,21 @@ InitErgmTerm..intersect.lt.net<-function(nw, arglist, ...) {
        dependence=FALSE)
 }
 
-
+#' @templateVar name Change
+#' @title The Change Operator Term
+#' @description The Change Operator Term
+#' @details This term accepts a model formula
+#'   and produces the corresponding model for a network constructed
+#'   by taking the dyads that have changed between time steps.
+#'
+#' @usage
+#' # binary: Change(formula)
+#' @template ergmTerm-formula
+#'
+#' @template ergmTerm-general
+#'
+#' @concept operator
+#' @concept durational
 `InitErgmTerm.Change (dynamic)` <- function(nw, arglist,  ...) {
   stopifnot_dynamic(nw, .netseries.OK=TRUE, ...)
   a <- check.ErgmTerm(nw, arglist,

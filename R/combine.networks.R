@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 
 #' A single block-diagonal network created by combining multiple networks
@@ -30,7 +30,7 @@
 #'   that vertex originally belonged.
 #'
 #' @param detect.edgecov if `TRUE`, combine network attributes that
-#'   look like dyadic covariate ([`ergm::edgecov`]) matrices into a
+#'   look like dyadic covariate ([`ergm::edgecov`][ergm::edgecov-ergmTerm]) matrices into a
 #'   block-diagonal matrix.
 #'
 #' @param keep.unshared.attr whether to keep those network, vertex,

@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  https://statnet.org/attribution .
 %
-%  Copyright 2008-2021 Statnet Commons
+%  Copyright 2008-2022 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=tergm-package]{tergm}} package}
@@ -60,6 +60,43 @@
   %   }
   % }
 %% }
+
+\section{Changes in version 4.1.0}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item Term documentation has been ported to the \CRANpkg{ergm} 4.2 documentation API.
+
+      \item New term operator \code{\link[=EdgeAges-ergmTerm]{EdgeAges}}.
+
+      \item Term and proposal keyword/concept \code{durational} is registered by \CRANpkg{tergm}.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Fixes to handling of \code{\link{networkDynamic}} objects.
+
+      \item Fixes to documentation URLs.
+    }
+  }
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item Miscellaneous speed-ups.
+
+      \item Documentation for some arguments and control parameters is now more standardized and detailed.
+
+      \item Dissolution parameter estimation in the simple (EDApprox) case is a bit more accurate.
+    }
+  }
+
+  \subsection{DEPRECATED & DEFUNCT}{
+    \itemize{
+      \item \code{\link{stergm}()} has been deprecated in favor of [tergm()], whose special case it is. It, and its associated functions may be removed in a future release.
+    }
+  }
+}
+
 
 
 \section{Changes in version 4.0.2}{

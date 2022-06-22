@@ -5,8 +5,20 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
+
+#' @templateVar name discord
+#' @title Discordant dyads
+#' @description Propose toggling discordant dyads with greater
+#'   frequency (typically about 50 percent).  May be used in
+#'   dynamic fitting and simulation.
+#'
+#' @usage
+#' # discord
+#'
+#' @template ergmHint-general
+#' @concept dyad-independent
 InitErgmConstraint.discord <- function(lhs.nw, ref=NULL, ...){
   nw <- if(is.character(ref)) lhs.nw %n% ref else lhs.nw
 

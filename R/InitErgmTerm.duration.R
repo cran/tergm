@@ -5,10 +5,24 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 
-
+#' @templateVar name edges.ageinterval
+#' @title Number of edges with age falling into a specified range
+#' @description Number of edges with age falling into a specified range
+#' @details This term counts the number of edges in the network for
+#'   which the time elapsed since formation is greater than or equal to
+#'   `from` but strictly less than `to` . In other words, it
+#'   is in the semiopen interval `[from, to)` .
+#'
+#' @usage
+#' # binary: edges.ageinterval(from, to=+Inf)
+#' @param from,to parameters to specify the lower bound and strict upper bounds. Can be scalars, vectors of the same length, or one of them must have length one, in which case it is recycled.
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.edges.ageinterval<-function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist,
@@ -34,6 +48,24 @@ else if(any(from>=to)) stop("Term edges.ageinterval must have from<to.")
        auxiliaries = ~.lasttoggle)
 }
 
+#' @templateVar name edge.ages
+#' @title Sum of ages of extant ties
+#' @description Sum of ages of extant ties
+#' @details This term adds one statistic equaling sum, over all ties
+#'   present in the network, of the amount of time elapsed since
+#'   formation.
+#'
+#'   Unlike [`mean.age`][mean.age-ergmTerm] , this statistic is well-defined on
+#'   an empty network. However, if used as a target, it appears to
+#'   produce highly biased dissolution parameter estimates if the goal
+#'   is to get an intended average duration.
+#'
+#' @usage
+#' # binary: edge.ages
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.edge.ages<-function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist)
@@ -45,6 +77,23 @@ InitErgmTerm.edge.ages<-function(nw, arglist, ...) {
        auxiliaries = ~.lasttoggle)
 }
 
+#' @templateVar name mean.age
+#' @title Average age of an extant tie
+#' @description Average age of an extant tie
+#' @details This term adds one statistic equaling the average, over all ties
+#'   present in the network, of the amount of time elapsed since
+#'   formation.
+#'
+#' @usage
+#' # binary: mean.age(emptyval=0, log=FALSE)
+#' @param emptyval can be used to specify the value returned if the network is empty. This is, technically, an arbitrary value, but it should
+#'   not have a substantial effect unless a non-negligible fraction of
+#'   networks at the parameter configuration of interest is empty.
+#' @param log logical specifying if mean log age should be returned instead of mean age
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.mean.age<-function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist,
@@ -63,6 +112,31 @@ InitErgmTerm.mean.age<-function(nw, arglist, ...) {
        auxiliaries = ~.lasttoggle)
 }
 
+#' @templateVar name nodefactor.mean.age
+#' @title Average ages of extant half-ties incident on nodes of specified attribute levels
+#' @description Average ages of extant half-ties incident on nodes of specified attribute levels
+#' @details This term adds one statistic for each level of `attr` ,
+#'   equaling the average, over all half-ties incident on nodes of that level,
+#'   of the amount of time elapsed since formation.
+#'
+#' @usage
+#' # binary: nodefactor.mean.age(attr, levels=NULL, emptyval=0, log=FALSE)
+#' @template ergmTerm-attr
+#' @param levels controls what levels are included. Note that the default
+#'   `levels` value for `nodefactor.mean.age` retains all levels, unlike the default
+#'   for `nodefactor` , which omits the first level.
+#' @param emptyval can be used to specify the value returned if the network is empty. A different value may be
+#'   specified for each level of `attr`. The length of `emptyval` should either be 1 (in which case that value
+#'   is used for every level of `attr` ) or should be equal to the number of retained levels of `attr` , in
+#'   which case the `i` th value in `emptyval` is used for the `i` th retained level of `attr`. This is,
+#'   technically, an arbitrary value, but it should
+#'   not have a substantial effect unless a non-negligible fraction of
+#'   networks at the parameter configuration of interest is empty.
+#' @param log logical specifying if mean log age should be returned instead of mean age
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.nodefactor.mean.age <- function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist,
@@ -108,6 +182,30 @@ InitErgmTerm.nodefactor.mean.age <- function(nw, arglist, ...) {
        log = as.integer(a$log))  
 }
 
+#' @templateVar name nodemix.mean.age
+#' @title Average ages of extant ties of specified mixing types
+#' @description Average ages of extant ties of specified mixing types
+#' @details This term adds one statistic for each mixing type of `attr` ,
+#'   equaling the average, over all ties of that mixing type,
+#'   of the amount of time elapsed since formation.
+#'
+#' @usage
+#' # binary: nodemix.mean.age(attr, b1levels=NULL, b2levels=NULL, levels=NULL,
+#' #                          levels2=NULL, emptyval=0, log=FALSE)
+#' @template ergmTerm-attr
+#' @param b1levels,b2levels,levels,level2 control what statistics are included in the model and the order in which they appear. `levels2` apply to all networks; `levels` applies to unipartite networks; `b1levels` and `b2levels` apply to bipartite networks (see Specifying Vertex attributes and Levels (`?nodal_attributes`) for details)
+#' @param emptyval can be used to specify the value returned if the network is empty. A different value may be
+#'   specified for each mixing type of `attr`. The length of `emptyval` should either be 1 (in which case that value
+#'   is used for every mixing type of `attr` ) or should be equal to the number of retained mixing types of `attr` , in
+#'   which case the `i` th value in `emptyval` is used for the `i` th retained mixing type of `attr`. This is,
+#'   technically, an arbitrary value, but it should
+#'   not have a substantial effect unless a non-negligible fraction of
+#'   networks at the parameter configuration of interest is empty.
+#' @param log logical specifying if mean log age should be returned instead of mean age
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.nodemix.mean.age <- function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist,
@@ -227,7 +325,26 @@ InitErgmTerm.nodemix.mean.age <- function(nw, arglist, ...) {
        nodecov = as.integer(c(0L, nodecov) - 1L)) # two shifts to make the C code cleaner
 }
 
-
+#' @templateVar name edgecov.mean.age
+#' @title Weighted average age of an extant tie
+#' @description Weighted average age of an extant tie
+#' @details This term adds one statistic equaling the average, over all ties
+#'   present in the network, of the amount of time elapsed since
+#'   formation, weighted by a (nonnegative) dyadic covariate.
+#'
+#'   The behavior when there are negative weights is undefined.
+#'
+#' @usage
+#' # binary: edgecov.mean.age(x, attrname=NULL, emptyval=0)
+#' @template ergmTerm-x-attrname
+#' @param emptyval can be used to specify the value returned if the network is empty (or all extant edges have been weighted 0). This is, technically, an arbitrary value, but it should
+#'   not have a substantial effect unless a non-negligible fraction of
+#'   networks at the parameter configuration of interest is empty
+#'   and/or if only a few dyads have nonzero weights.
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.edgecov.mean.age<-function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist, 
@@ -259,6 +376,27 @@ InitErgmTerm.edgecov.mean.age<-function(nw, arglist, ...) {
   list(name="edgecov_mean_age", coef.names = cn, inputs = inputs, duration=TRUE, dependence=FALSE, emptynwstats = a$emptyval, auxiliaries = ~.lasttoggle)
 }
 
+#' @templateVar name edgecov.ages
+#' @title Weighted sum of ages of extant ties
+#' @description Weighted sum of ages of extant ties
+#' @details This term adds one statistic equaling sum, over all ties
+#'   present in the network, of the amount of time elapsed since
+#'   formation, multiplied by a dyadic covariate.
+#'
+#'   "Weights" can be negative.
+#'
+#'   Unlike [`edgecov.mean.age`][edgecov.mean.age-ergmTerm] , this statistic is well-defined on
+#'   an empty network. However, if used as a target, it appears to
+#'   produce highly biased dissolution parameter estimates if the goal
+#'   is to get an intended average duration.
+#'
+#' @usage
+#' # binary: edgecov.ages(x, attrname=NULL)
+#' @template ergmTerm-x-attrname
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.edgecov.ages<-function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist, 
@@ -291,6 +429,30 @@ InitErgmTerm.edgecov.ages<-function(nw, arglist, ...) {
 }
 
 ################################################################################
+
+#' @templateVar name degree.mean.age
+#' @title Average age of ties incident on nodes having a given degree
+#' @description Average age of ties incident on nodes having a given degree
+#' @details This term adds one
+#'   network statistic to the model for each element in `d` ; the \eqn{i} th
+#'   such statistic equals the average, among all ties incident on nodes
+#'   with degree exactly `d[i]` , of the amount of time elapsed
+#'   since the tie's formation. The optional argument
+#'   `byarg` specifies a vertex attribute (see
+#'   Specifying Vertex Attributes and Levels
+#'   for details). If specified, then separate degree
+#'   statistics are calculated for nodes having each separate
+#'   value of the attribute.
+#'
+#' @usage
+#' # binary: degree.mean.age(d, byarg=NULL, emptyval=0)
+#' @param d a vector of distinct integers
+#' @template ergmTerm-byattr
+#' @template ergmTerm-emptyval
+#'
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.degree.mean.age<-function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
@@ -334,6 +496,28 @@ InitErgmTerm.degree.mean.age<-function(nw, arglist, ...) {
 }
 
 ################################################################################
+
+#' @templateVar name degrange.mean.age
+#' @title Average age of ties incident on nodes having degree in a given range
+#' @description Average age of ties incident on nodes having degree in a given range
+#' @details This term adds one
+#'   network statistic to the model for each element of `from` (or `to` ); the \eqn{i} th
+#'   such statistic equals the average, among all ties incident on nodes
+#'   with degree greater than or equal to
+#'   `from[i]` but strictly less than `to[i]` , of the amount of time elapsed
+#'   since the tie's formation. The optional argument
+#'
+#' @usage
+#' # binary: degrange.mean.age(from, to=+Inf, byarg=NULL, emptyval=0)
+#' @param from,to vectors of distinct
+#'   integers or `+Inf` , for `to` . If one of the vectors has
+#'   length 1, it is recycled to the length of the other. Otherwise, they
+#'   must have the same length.
+#' @template ergmTerm-byattr
+#' @template ergmTerm-emptyval
+#' @template ergmTerm-general
+#'
+#' @concept durational
 InitErgmTerm.degrange.mean.age<-function(nw, arglist, ...) {
   stopifnot_dynamic(nw, ...)
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
@@ -387,4 +571,47 @@ InitErgmTerm.degrange.mean.age<-function(nw, arglist, ...) {
        emptynwstats=rep(a$emptyval,length(coef.names)), duration=TRUE, dependence=TRUE, auxiliaries = ~.lasttoggle)
 }
 
+#' @templateVar name EdgeAges
+#' @title The EdgeAges Operator Term
+#' @description The EdgeAges Operator Term
+#' @details This term accepts a cross-sectional, dyad-independent model
+#'   formula.  The statistics of the EdgeAges term are equal to the sum over
+#'   all extant ties of the tie age times the on-toggle change statistics for
+#'   the tie under the given model formula.
+#'
+#' @usage
+#' # binary: EdgeAges(formula)
+#' @param formula cross-sectional, dyad-independent model formula
+#'
+#' @template ergmTerm-general
+#'
+#' @concept operator
+#' @concept durational
+InitErgmTerm.EdgeAges <- function(nw, arglist, ...) {
+  stopifnot_dynamic(nw, ...)
 
+  a <- check.ErgmTerm(nw, arglist,
+                      varnames = c("formula"),
+                      vartypes = c("formula"),
+                      defaultvalues = list(NULL),
+                      required = c(TRUE))
+
+  m <- ergm_model(a$formula, nw, ..., offset.decorate = FALSE)
+
+  if(is.durational(m) || !is.dyad.independent(m)) {
+    ergm_Init_abort("EdgeAges formula argument must be cross-sectional and dyad-independent")
+  }
+
+  wm <- wrap.ergm_model(m, nw, namewrap = ergm_mk_std_op_namewrap("EdgeAges"))
+
+  ## EdgeAges stats = 0 on emptynw, even if the submodel stats don't = 0 on emptynw
+  wm$emptynwstats <- NULL
+
+  c(list(name = "EdgeAges",
+         submodel = m,
+         duration = TRUE,
+         dependence = FALSE,
+         auxiliaries = ~.lasttoggle),
+    ergm_propagate_ext.encode(m),
+    wm)
+}

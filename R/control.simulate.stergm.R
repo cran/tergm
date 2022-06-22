@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 ########################################################################
 # The <control.simulate.X> functions each create a list of paramaters
@@ -127,15 +127,11 @@ control.simulate.network <- function(MCMC.burnin.min = 1000,
 #' @param MCMC.maxchanges Maximum number of changes for
 #'   which to allocate space.
 #' 
-#' @param MCMC.packagenames Names of packages in which to look for
-#'   change statistic functions in addition to those
-#'   autodetected. This argument should not be needed outside of very
-#'   strange setups.
+#' @template control_MCMC_packagenames
 #'
-#' @param term.options A list of additional arguments to be passed to term initializers. 
-#'   It can also be set globally via \code{options(ergm.term=list(...))}.
+#' @template term_options
 #' 
-#' @param MCMC.maxedges Maximum number of edges expected in network.
+#' @template control_MCMC_maxedges
 #' 
 #' @return A list with arguments as components.
 #' 

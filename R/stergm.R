@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 ################################################################################
 # stergm --- fit Separable Temporal ERGMs.
@@ -13,14 +13,14 @@
 
 
 
-#' Separable Temporal Exponential Family Random Graph Models
+#' Separable Temporal Exponential Family Random Graph Models (Deprecated)
 #' 
-#' \code{\link{stergm}} is used for finding Separable Temporal ERGMs' (STERGMs)
-#' Conditional MLE (CMLE) (Krivitsky and Handcock, 2010) and Equilibrium
-#' Generalized Method of Moments Estimator (EGMME) (Krivitsky, 2009).
-#' 
-#' This function is included for backwards compatibility, and users are  
-#' encouraged to use the new \code{tergm} family of functions instead.
+#' \code{\link{stergm}} is used for finding Separable Temporal ERGMs'
+#' (STERGMs) Conditional MLE (CMLE) (Krivitsky and Handcock, 2014) and
+#' Equilibrium Generalized Method of Moments Estimator (EGMME)
+#' (Krivitsky, 2009). This function is deprecated in favor of
+#' [tergm()], whose special case it is, and may be removed in a future
+#' version.
 #' 
 #' The \code{stergm} function uses a pair of formulas, \code{formation} and 
 #' \code{dissolution} to model tie-dynamics.  The dissolution formula, however, is 
@@ -56,20 +56,9 @@
 #' terms of tie persistence: negative coefficients imply lower rates of persistence
 #' and postive coefficients imply higher rates.  The dissolution effects are simply the
 #' negation of these coefficients.
-#' @param constraints A one-sided formula specifying one or more constraints on
-#' the support of the distribution of the networks being modeled, using syntax
-#' similar to the \code{formula} argument. Multiple constraints may be given,
-#' separated by \dQuote{+} operators.  Together with the model terms in the
-#' formula and the reference measure, the constraints define the distribution
-#' of networks being modeled.
-#' 
-#' The default is \code{~.}, for an unconstrained model.
-#' 
-#' See the [ERGM constraints][ergm-constraints] documentation for the
-#' constraints implemented in the **[ergm][ergm-package]** package.
-#' Other packages may add their own constraints.
-#' 
-#' Note that not all possible combinations of constraints are supported.
+#'
+#' @template constraints
+#'
 #' @param estimate One of "EGMME" for Equilibrium Generalized Method of Moments
 #' Estimation, based on a single network with some temporal information and
 #' making an assumption that it is a product of a STERGM process running to its
@@ -112,8 +101,7 @@
 #' @param control A list of control parameters for algorithm tuning.
 #' Constructed using \code{\link{control.stergm}}.  Remapped to 
 #' \code{\link{control.tergm}}.
-#' @param verbose logical or integer; if TRUE or positive, the program will
-#' print out progress information. Higher values result in more output.
+#' @template verbose
 #' @param \dots Additional arguments, to be passed to lower-level functions.
 #' @return \code{\link{stergm}} returns an object of class [`tergm`];
 #'         see [tergm()] for details and methods.
@@ -128,50 +116,6 @@
 #' University Department of Statistics Technical Report}, 2012(2012-01).
 #' \url{https://web.archive.org/web/20170830053722/https://stat.psu.edu/research/technical-report-files/2012-technical-reports/TR1201A.pdf}
 #' 
-#' 
-#' @examples
-#' \dontrun{
-#' # EGMME Example
-#' par(ask=FALSE)
-#' n<-30
-#' g0<-network.initialize(n,dir=FALSE)
-#' 
-#' #                     edges, degree(1), mean.age
-#' target.stats<-c(      n*1/2,    n*0.6,        20)
-#' 
-#' dynfit<-stergm(g0,formation = ~edges+degree(1), dissolution = ~edges,
-#'                targets = ~edges+degree(1)+mean.age,
-#'                target.stats=target.stats, estimate="EGMME",
-#'                control=control.stergm(SA.plot.progress=TRUE))
-#' 
-#' par(ask=TRUE)
-#' mcmc.diagnostics(dynfit)
-#' summary(dynfit)
-#' }
-#'
-#' \donttest{
-#' # CMLE Example
-#' data(samplk)
-#' 
-#' # Fit a transition from Time 1 to Time 2
-#' samplk12 <- stergm(list(samplk1, samplk2),
-#'                    formation=~edges+mutual+transitiveties+cyclicalties,
-#'                    dissolution=~edges+mutual+transitiveties+cyclicalties,
-#'                    estimate="CMLE")
-#' 
-#' mcmc.diagnostics(samplk12)
-#' summary(samplk12)
-#' 
-#' # Fit a transition from Time 1 to Time 2 and from Time 2 to Time 3 jointly
-#' samplk123 <- stergm(list(samplk1, samplk2, samplk3),
-#'                     formation=~edges+mutual+transitiveties+cyclicalties,
-#'                     dissolution=~edges+mutual+transitiveties+cyclicalties,
-#'                     estimate="CMLE")
-#' 
-#' mcmc.diagnostics(samplk123)
-#' summary(samplk123)
-#' }
-#'
 #' @import network
 #' @import networkDynamic
 #' @export
@@ -180,6 +124,8 @@ stergm <- function(nw, formation, dissolution, constraints = ~., estimate, times
                    eval.loglik=NVL(getOption("tergm.eval.loglik"), getOption("ergm.eval.loglik")),
                    control=control.stergm(),
                    verbose=FALSE, ..., SAN.offsets = NULL) {
+  .Deprecate_once("tergm")
+
   check.control.class("stergm", "stergm")
   
   if(!is.null(control$seed))  set.seed(as.integer(control$seed))

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 
 .same_constraints <- function(nwl, nattr){
@@ -287,7 +287,24 @@ InitErgmTerm..crossnets <- function(nw, arglist, ...){
 }
 
 # A term for a cross-sectional model for the network in a series.
+
+#' @templateVar name Cross
+#' @title The Crossection Operator Term
+#' @description The Crossection Operator Term
+#' @details This term accepts a model formula
+#'   and produces the corresponding model for the cross-sectional
+#'   network. It is mainly useful for CMLE estimation, and has no effect (i.e.,
+#'   `Cross(~TERM) == ~TERM` ) for EGMME and dynamic simulation.
+#'
+#' @usage
+#' # binary: Cross(formula)
+#' @template ergmTerm-formula
+#'
+#' @template ergmTerm-general
 #' @import purrr
+#'
+#' @concept operator
+#' @concept durational
 InitErgmTerm.Cross <- function(nw, arglist, ..., env=baseenv()) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formula", "label"),

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2021 Statnet Commons
+#  Copyright 2008-2022 Statnet Commons
 ################################################################################
 ################################################################################
 # tergm --- fit Separable Temporal ERGMs.
@@ -27,20 +27,9 @@
 #' \url{https://statnet.org/Workshops/tergm/tergm_tutorial.html} }
 #' 
 #' @param formula an ERGM formula.
-#' @param constraints A one-sided formula specifying one or more constraints on
-#' the support of the distribution of the networks being modeled, using syntax
-#' similar to the \code{formula} argument. Multiple constraints may be given,
-#' separated by \dQuote{+} operators.  Together with the model terms in the
-#' formula and the reference measure, the constraints define the distribution
-#' of networks being modeled.
-#' 
-#' The default is \code{~.}, for an unconstrained model.
-#' 
-#' See the [ERGM constraints][ergm-constraints] documentation for the
-#' constraints implemented in the **[ergm][ergm-package]** package.
-#' Other packages may add their own constraints.
-#' 
-#' Note that not all possible combinations of constraints are supported.
+#'
+#' @template constraints
+#'
 #' @param estimate One of "EGMME" for Equilibrium Generalized Method of Moments
 #' Estimation, based on a single network with some temporal information and
 #' making an assumption that it is a product of a TERGM process running to its
@@ -79,8 +68,7 @@
 #'   `getOption("ergm.eval.loglik")` if not set.
 #' @param control A list of control parameters for algorithm tuning.
 #' Constructed using \code{\link{control.tergm}}.
-#' @param verbose logical or integer; if TRUE or positive, the program will
-#' print out progress information. Higher values result in more output.
+#' @template verbose
 #' @param \dots Additional arguments, to be passed to lower-level functions.
 #'
 #' @return \code{\link{tergm}} returns an object of class `tergm` that
