@@ -1,6 +1,6 @@
 Package: tergm
-Version: 4.1.0
-Date: 2022-06-22
+Version: 4.1.1
+Date: 2022-11-07
 Title: Fit, Simulate and Diagnose Models for Network Evolution Based on
         Exponential-Family Random Graph Models
 Authors@R: c(
@@ -16,7 +16,8 @@ Authors@R: c(
         person("Li","Wang",role=c("ctb"),email="lxwang@gmail.com"),
         person("Kirk","Li",role=c("ctb"),email="kirkli@uw.edu"),
         person("Chad", "Klumb", role=c("ctb"), email="cklumb@gmail.com"))
-Depends: ergm (>= 4.2.2), network (>= 1.15), networkDynamic (>= 0.10.0)
+Depends: ergm (>= 4.3.1), network (>= 1.18.0), networkDynamic (>=
+        0.11.2)
 Imports: methods, utils, robustbase (>= 0.93.5), coda (>= 0.19.2), nlme
         (>= 3.1.139), MASS (>= 7.3.51.4), statnet.common (>= 4.4.0),
         purrr
@@ -28,12 +29,12 @@ Description: An integrated set of extensions to the 'ergm' package to analyze an
 License: GPL-3 + file LICENSE
 URL: https://statnet.org
 VignetteBuilder: rmarkdown, knitr
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 Encoding: UTF-8
 NeedsCompilation: yes
-Packaged: 2022-06-22 13:59:25 UTC; pavel
+Packaged: 2022-11-08 04:33:59 UTC; pavel
 Author: Pavel N. Krivitsky [aut, cre] (<https://orcid.org/0000-0002-9101-3362>),
   Mark S. Handcock [aut, ths],
   David R. Hunter [ctb],
@@ -48,4 +49,4 @@ Author: Pavel N. Krivitsky [aut, cre] (<https://orcid.org/0000-0002-9101-3362>),
   Chad Klumb [ctb]
 Maintainer: Pavel N. Krivitsky <pavel@statnet.org>
 Repository: CRAN
-Date/Publication: 2022-06-22 15:30:02 UTC
+Date/Publication: 2022-11-08 14:10:02 UTC

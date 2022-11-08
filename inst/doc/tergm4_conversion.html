@@ -27,22 +27,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
-  }
-});
-</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -251,17 +235,28 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Conversions for <code>tergm</code> version 4.0</h1>
+<h1 class="title toc-ignore">Conversions for <code>tergm</code> version
+4.0</h1>
 
 
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>Version 4.0 of the <code>tergm</code> package introduces new user interfaces for specifying <code>tergm</code> models. While an effort has been made to maintain a high degree of backwards compatibility, there are some points of backwards incompatibility, and some users may wish to convert their code to use the new interfaces anyway, so this document describes how to go about doing that. The examples given here are somewhat artificial so as to better illustrate the range of possible changes needed; they may not be typical or even plausible in every detail, but are intended to exhibit the types of updates that users may need to make.</p>
+<p>Version 4.0 of the <code>tergm</code> package introduces new user
+interfaces for specifying <code>tergm</code> models. While an effort has
+been made to maintain a high degree of backwards compatibility, there
+are some points of backwards incompatibility, and some users may wish to
+convert their code to use the new interfaces anyway, so this document
+describes how to go about doing that. The examples given here are
+somewhat artificial so as to better illustrate the range of possible
+changes needed; they may not be typical or even plausible in every
+detail, but are intended to exhibit the types of updates that users may
+need to make.</p>
 </div>
 <div id="estimation" class="section level1">
 <h1>Estimation</h1>
-<p>Estimation calls in <code>tergm</code> 3.x might look something like</p>
+<p>Estimation calls in <code>tergm</code> 3.x might look something
+like</p>
 <pre><code>data(samplk)
 samp &lt;- list(samplk1, samplk2, samplk3)
 samp.fit &lt;- stergm(samp,
@@ -281,29 +276,78 @@ stergm.fit.1 &lt;- stergm(flobusiness,
                        estimate = &quot;EGMME&quot;,
                        control = control.stergm(SA.plot.progress=TRUE))</code></pre>
 <p>for EGMME.</p>
-<p>To convert these to the new 4.0 user interface, we make the following changes.</p>
+<p>To convert these to the new 4.0 user interface, we make the following
+changes.</p>
 <ul>
-<li><p>Replace the function name <code>stergm</code> with <code>tergm</code> (in 4.0, the tergms need not be separable, hence we drop the s).</p></li>
-<li><p>Combine the network (or network list), formation, and dissolution formulas into a single formula, schematically of the form</p>
+<li><p>Replace the function name <code>stergm</code> with
+<code>tergm</code> (in 4.0, the tergms need not be separable, hence we
+drop the s).</p></li>
+<li><p>Combine the network (or network list), formation, and dissolution
+formulas into a single formula, schematically of the form</p>
 <pre><code>network ~ Form(formation formula) + 
           Persist(dissolution formula)</code></pre>
-<p>where <code>Form</code> and <code>Persist</code> are operator terms defined in <code>tergm</code> 4.0.</p>
+<p>where <code>Form</code> and <code>Persist</code> are operator terms
+defined in <code>tergm</code> 4.0.</p>
 <p>For the CMLE example, this results in the formula</p>
 <pre><code>samp ~ Form(~edges+mutual+cyclicalties+transitiveties) + 
        Persist(~edges+mutual+cyclicalties+transitiveties)</code></pre>
 <p>and for the EGMME example, it results in the formula</p>
 <pre><code>flobusiness ~ Form(~edges+gwesp(0,fixed=T)) + 
               Persist(~offset(edges))</code></pre>
-<p>These formulas will be our first arguments to the <code>tergm</code> function.</p></li>
-<li><p>The control argument (if present), previously of class <code>control.stergm</code>, should be replaced by one of class <code>control.tergm</code>. This can be accomplished by replacing <code>control.stergm()</code> with <code>control.tergm()</code>, <code>snctrl()</code>, or <code>list()</code>, and updating arguments as follows. Arguments to <code>control.stergm()</code> occurring in pairs with <code>.form</code> and <code>.diss</code> in their names have been collapsed to single, correspondingly named arguments to <code>control.tergm()</code> without <code>.form</code> or <code>.diss</code>. Additionally, the arguments <code>CMLE.control.form</code> and <code>CMLE.control.diss</code> to <code>control.stergm()</code> correspond to the <code>CMLE.ergm</code> argument to <code>control.tergm()</code> (and have been renamed as the <code>CMLE.form.ergm</code> and <code>CMLE.diss.ergm</code> control arguments to <code>control.stergm()</code>). Furthermore, the arguments <code>MCMC.init.maxedges</code> and <code>MCMC.init.maxchanges</code> to <code>control.stergm()</code> have been replaced by the <code>MCMC.maxedges</code> and <code>MCMC.maxchanges</code> arguments to <code>control.tergm()</code>; these arguments have also been replaced in <code>control.stergm()</code>, so code continuing to use the old interface will still need to change from using <code>MCMC.init.maxedges</code> and <code>MCMC.init.maxchanges</code> to using <code>MCMC.maxedges</code> and <code>MCMC.maxchanges</code>.</p>
-<p>Our discussion of initial coefficient values below will also include the necessary control argument changes for our examples above.</p></li>
-<li><p>The initial coefficient specifications for the formation and dissolution models, if passed, should be combined into a specification of initial coefficients for the combined model. This can be done through the <code>tergm</code> function’s <code>offset.coef</code>, <code>control$init</code>, and/or <code>control$CMLE.ergm$init</code> arguments (the final one applying only to the CMLE case). If <code>offset.coef</code> is passed, it should have length equal to the number of offset thetas in the combined model, and if <code>control$init</code> or <code>control$CMLE.ergm$init</code> is passed, it should have length equal to the total number of thetas in the combined model. (<code>NA</code>s may be used in <code>control$init</code> or <code>control$CMLE.ergm$init</code> to indicate that initial values for those (non-offset) thetas are not being passed.) Here <code>control</code> refers to the <code>control.tergm</code> class control discussed in the previous bullet point.</p>
-<p>In our examples, the CMLE call specifies initial coefficient values through <code>control$CMLE.control.*$init</code>. We can combine these into <code>control$CMLE.ergm$init</code> as</p>
+<p>These formulas will be our first arguments to the <code>tergm</code>
+function.</p></li>
+<li><p>The control argument (if present), previously of class
+<code>control.stergm</code>, should be replaced by one of class
+<code>control.tergm</code>. This can be accomplished by replacing
+<code>control.stergm()</code> with <code>control.tergm()</code>,
+<code>snctrl()</code>, or <code>list()</code>, and updating arguments as
+follows. Arguments to <code>control.stergm()</code> occurring in pairs
+with <code>.form</code> and <code>.diss</code> in their names have been
+collapsed to single, correspondingly named arguments to
+<code>control.tergm()</code> without <code>.form</code> or
+<code>.diss</code>. Additionally, the arguments
+<code>CMLE.control.form</code> and <code>CMLE.control.diss</code> to
+<code>control.stergm()</code> correspond to the <code>CMLE.ergm</code>
+argument to <code>control.tergm()</code> (and have been renamed as the
+<code>CMLE.form.ergm</code> and <code>CMLE.diss.ergm</code> control
+arguments to <code>control.stergm()</code>). Furthermore, the arguments
+<code>MCMC.init.maxedges</code> and <code>MCMC.init.maxchanges</code> to
+<code>control.stergm()</code> have been replaced by the
+<code>MCMC.maxedges</code> and <code>MCMC.maxchanges</code> arguments to
+<code>control.tergm()</code>; these arguments have also been replaced in
+<code>control.stergm()</code>, so code continuing to use the old
+interface will still need to change from using
+<code>MCMC.init.maxedges</code> and <code>MCMC.init.maxchanges</code> to
+using <code>MCMC.maxedges</code> and <code>MCMC.maxchanges</code>.</p>
+<p>Our discussion of initial coefficient values below will also include
+the necessary control argument changes for our examples above.</p></li>
+<li><p>The initial coefficient specifications for the formation and
+dissolution models, if passed, should be combined into a specification
+of initial coefficients for the combined model. This can be done through
+the <code>tergm</code> function’s <code>offset.coef</code>,
+<code>control$init</code>, and/or <code>control$CMLE.ergm$init</code>
+arguments (the final one applying only to the CMLE case). If
+<code>offset.coef</code> is passed, it should have length equal to the
+number of offset thetas in the combined model, and if
+<code>control$init</code> or <code>control$CMLE.ergm$init</code> is
+passed, it should have length equal to the total number of thetas in the
+combined model. (<code>NA</code>s may be used in
+<code>control$init</code> or <code>control$CMLE.ergm$init</code> to
+indicate that initial values for those (non-offset) thetas are not being
+passed.) Here <code>control</code> refers to the
+<code>control.tergm</code> class control discussed in the previous
+bullet point.</p>
+<p>In our examples, the CMLE call specifies initial coefficient values
+through <code>control$CMLE.control.*$init</code>. We can combine these
+into <code>control$CMLE.ergm$init</code> as</p>
 <pre><code>control = control.tergm(CMLE.ergm = control.ergm(init = c(-3.5,2,0,NA,0,1,0,1/2)))</code></pre>
-<p>noting that we also replaced <code>control.stergm()</code> with <code>control.tergm()</code>. We can simplify this further by exploiting new control list flattening features, writing</p>
+<p>noting that we also replaced <code>control.stergm()</code> with
+<code>control.tergm()</code>. We can simplify this further by exploiting
+new control list flattening features, writing</p>
 <pre><code>control = snctrl(init = c(-3.5,2,0,NA,0,1,0,1/2))</code></pre>
 <p>instead.</p>
-<p>The EGMME call specifies only a single dissolution offset, which we can specify through <code>offset.coef</code> as</p>
+<p>The EGMME call specifies only a single dissolution offset, which we
+can specify through <code>offset.coef</code> as</p>
 <pre><code>offset.coef = log(9)</code></pre></li>
 </ul>
 <p>Overall, this produces the new-style calls</p>
@@ -328,25 +372,72 @@ tergm.fit.1 &lt;- tergm(flobusiness ~ Form(~edges+gwesp(0,fixed=T)) +
 <h1>Simulation</h1>
 <div id="from-a-fitted-tergm-object" class="section level2">
 <h2>From a fitted <code>tergm</code> object</h2>
-<p>A call in <code>tergm</code> 3.x for simulating from a fitted <code>stergm</code> might look something like</p>
+<p>A call in <code>tergm</code> 3.x for simulating from a fitted
+<code>stergm</code> might look something like</p>
 <pre><code>stergm.sim.1 &lt;- simulate(stergm.fit.1, 
                          stats.form = TRUE,
                          nsim = 1,
                          time.slices = 1000,
                          control = control.simulate.stergm(MCMC.init.maxchanges = 10000))</code></pre>
-<p>There is no <code>simulate.stergm</code> function in <code>tergm</code> 4.0, only a <code>simulate.tergm</code> function, so the changes described in this section are generally mandatory, with the exception of the control list class, which can be left as <code>control.simulate.stergm</code> if desired (although this is not recommended). Even if one calls the old <code>stergm()</code> function to estimate the model, calling <code>simulate</code> on the returned object will dispatch to the <code>simulate.tergm</code> function described here.</p>
-<p>To convert from simulating a fitted <code>stergm</code> in <code>tergm</code> 3.x to simulating a fitted <code>tergm</code> in <code>tergm</code> 4.0, we make the following changes.</p>
+<p>There is no <code>simulate.stergm</code> function in
+<code>tergm</code> 4.0, only a <code>simulate.tergm</code> function, so
+the changes described in this section are generally mandatory, with the
+exception of the control list class, which can be left as
+<code>control.simulate.stergm</code> if desired (although this is not
+recommended). Even if one calls the old <code>stergm()</code> function
+to estimate the model, calling <code>simulate</code> on the returned
+object will dispatch to the <code>simulate.tergm</code> function
+described here.</p>
+<p>To convert from simulating a fitted <code>stergm</code> in
+<code>tergm</code> 3.x to simulating a fitted <code>tergm</code> in
+<code>tergm</code> 4.0, we make the following changes.</p>
 <ul>
-<li><p>Replace the <code>coef.form</code> and <code>coef.diss</code> arguments (which will default to the coefficients of the fitted <code>stergm</code>) with the <code>coef</code> argument (which will default to the coefficients of the fitted <code>tergm</code>), which is schematically of the form <code>coef = c(coef.form, coef.diss)</code>, assuming the combined formula used when estimating the <code>tergm</code> was of the form described in the Estimation section (with <code>Form(formation formula)</code> preceding <code>Persist(dissolution formula)</code>).</p>
-<p>These arguments are not passed in the example above, so no corresponding changes are needed in that example.</p></li>
-<li><p>Replace the <code>stats.form</code> and <code>stats.diss</code> arguments (if passed) with the <code>stats</code> argument, which will give all generative model statistics if set to <code>TRUE</code>.</p>
-<p>In the example above, we pass <code>stats.form = TRUE</code>, so in the 4.0 version of the call, we will set <code>stats = TRUE</code>.</p></li>
-<li><p>The control argument (if passed), previously of class <code>control.simulate.stergm</code>, should be replaced by one of class <code>control.simulate.tergm</code>. This can be accomplished by replacing <code>control.simulate.stergm()</code> with <code>control.simulate.tergm()</code>, <code>snctrl()</code>, or <code>list()</code>, and updating arguments as follows. Arguments to <code>control.simulate.stergm()</code> occurring in pairs with <code>.form</code> and <code>.diss</code> in their names have been collapsed to single, correspondingly named arguments to <code>control.simulate.tergm()</code> without <code>.form</code> or <code>.diss</code>. Additionally, the arguments <code>MCMC.init.maxedges</code> and <code>MCMC.init.maxchanges</code> to <code>control.simulate.stergm()</code> have been replaced by the <code>MCMC.maxedges</code> and <code>MCMC.maxchanges</code> arguments to <code>control.simulate.tergm()</code>; these arguments have also been replaced in <code>control.simulate.stergm()</code>, so code continuing to use <code>control.simulate.stergm()</code> will still need to change from using <code>MCMC.init.maxedges</code> and <code>MCMC.init.maxchanges</code> to using <code>MCMC.maxedges</code> and <code>MCMC.maxchanges</code>.</p>
-<p>In the example above, we passed <code>MCMC.init.maxchanges = 10000</code>; since this is enough to accomodate all expected changes throughout the entire simulation, we will pass</p>
+<li><p>Replace the <code>coef.form</code> and <code>coef.diss</code>
+arguments (which will default to the coefficients of the fitted
+<code>stergm</code>) with the <code>coef</code> argument (which will
+default to the coefficients of the fitted <code>tergm</code>), which is
+schematically of the form <code>coef = c(coef.form, coef.diss)</code>,
+assuming the combined formula used when estimating the
+<code>tergm</code> was of the form described in the Estimation section
+(with <code>Form(formation formula)</code> preceding
+<code>Persist(dissolution formula)</code>).</p>
+<p>These arguments are not passed in the example above, so no
+corresponding changes are needed in that example.</p></li>
+<li><p>Replace the <code>stats.form</code> and <code>stats.diss</code>
+arguments (if passed) with the <code>stats</code> argument, which will
+give all generative model statistics if set to <code>TRUE</code>.</p>
+<p>In the example above, we pass <code>stats.form = TRUE</code>, so in
+the 4.0 version of the call, we will set
+<code>stats = TRUE</code>.</p></li>
+<li><p>The control argument (if passed), previously of class
+<code>control.simulate.stergm</code>, should be replaced by one of class
+<code>control.simulate.tergm</code>. This can be accomplished by
+replacing <code>control.simulate.stergm()</code> with
+<code>control.simulate.tergm()</code>, <code>snctrl()</code>, or
+<code>list()</code>, and updating arguments as follows. Arguments to
+<code>control.simulate.stergm()</code> occurring in pairs with
+<code>.form</code> and <code>.diss</code> in their names have been
+collapsed to single, correspondingly named arguments to
+<code>control.simulate.tergm()</code> without <code>.form</code> or
+<code>.diss</code>. Additionally, the arguments
+<code>MCMC.init.maxedges</code> and <code>MCMC.init.maxchanges</code> to
+<code>control.simulate.stergm()</code> have been replaced by the
+<code>MCMC.maxedges</code> and <code>MCMC.maxchanges</code> arguments to
+<code>control.simulate.tergm()</code>; these arguments have also been
+replaced in <code>control.simulate.stergm()</code>, so code continuing
+to use <code>control.simulate.stergm()</code> will still need to change
+from using <code>MCMC.init.maxedges</code> and
+<code>MCMC.init.maxchanges</code> to using <code>MCMC.maxedges</code>
+and <code>MCMC.maxchanges</code>.</p>
+<p>In the example above, we passed
+<code>MCMC.init.maxchanges = 10000</code>; since this is enough to
+accomodate all expected changes throughout the entire simulation, we
+will pass</p>
 <pre><code>control = snctrl(MCMC.maxchanges = 10000)</code></pre>
 <p>in the 4.0 version of the call.</p></li>
 </ul>
-<p>Thus, dropping the s from the object names for consistency, we obtain the 4.0 style call</p>
+<p>Thus, dropping the s from the object names for consistency, we obtain
+the 4.0 style call</p>
 <pre><code>tergm.sim.1 &lt;- simulate(tergm.fit.1, 
                         stats = TRUE,
                         nsim = 1,
@@ -355,7 +446,9 @@ tergm.fit.1 &lt;- tergm(flobusiness ~ Form(~edges+gwesp(0,fixed=T)) +
 </div>
 <div id="from-a-network-or-networkdynamic" class="section level2">
 <h2>From a network (or networkDynamic)</h2>
-<p>A call in <code>tergm</code> 3.x for simulating based on a starting network (or networkDynamic), along with specified formation and dissolution formulas and coefficients, might look something like</p>
+<p>A call in <code>tergm</code> 3.x for simulating based on a starting
+network (or networkDynamic), along with specified formation and
+dissolution formulas and coefficients, might look something like</p>
 <pre><code>stergm.sim.2 &lt;- simulate(flobusiness, 
                          formation = ~edges+gwesp(0,fixed=T),
                          dissolution = ~edges, 
@@ -363,16 +456,33 @@ tergm.fit.1 &lt;- tergm(flobusiness ~ Form(~edges+gwesp(0,fixed=T)) +
                          coef.form = c(-7.981749, 1.575780), 
                          coef.diss = log(99),
                          time.slices = 50000)</code></pre>
-<p>To convert from simulating based on a starting network in <code>tergm</code> 3.x to simulating based on a starting network in <code>tergm</code> 4.0, we make the following changes.</p>
+<p>To convert from simulating based on a starting network in
+<code>tergm</code> 3.x to simulating based on a starting network in
+<code>tergm</code> 4.0, we make the following changes.</p>
 <ul>
-<li><p>Combine the network, formation, and dissolution formulas into a single formula, schematically of the form</p>
+<li><p>Combine the network, formation, and dissolution formulas into a
+single formula, schematically of the form</p>
 <pre><code>network ~ Form(formation formula) + 
           Persist(dissolution formula)</code></pre>
 <p>as for estimation.</p></li>
-<li><p>Combine the <code>coef.form</code> and <code>coef.diss</code> arguments into a single <code>coef</code> argument, schematically of the form <code>coef = c(coef.form, coef.diss)</code>, assuming the combined formula is specified as in the previous bullet point (with <code>Form(formation formula)</code> preceding <code>Persist(dissolution formula)</code>).</p></li>
-<li><p>The control argument (if passed), previously of class <code>control.simulate.network</code>, should be replaced by one of class <code>control.simulate.formula.tergm</code>. This can be accomplished by replacing <code>control.simulate.network()</code> with <code>control.simulate.formula.tergm()</code>, <code>snctrl()</code>, or <code>list()</code>, and updating arguments as when simulating from a fitted <code>tergm</code>.</p></li>
-<li><p>Combine the <code>stats.form</code> and <code>stats.diss</code> arguments (if passed) into a single <code>stats</code> argument.</p></li>
-<li><p>Pass <code>dynamic = TRUE</code> to indicate that you want dynamic <code>tergm</code> simulation.</p></li>
+<li><p>Combine the <code>coef.form</code> and <code>coef.diss</code>
+arguments into a single <code>coef</code> argument, schematically of the
+form <code>coef = c(coef.form, coef.diss)</code>, assuming the combined
+formula is specified as in the previous bullet point (with
+<code>Form(formation formula)</code> preceding
+<code>Persist(dissolution formula)</code>).</p></li>
+<li><p>The control argument (if passed), previously of class
+<code>control.simulate.network</code>, should be replaced by one of
+class <code>control.simulate.formula.tergm</code>. This can be
+accomplished by replacing <code>control.simulate.network()</code> with
+<code>control.simulate.formula.tergm()</code>, <code>snctrl()</code>, or
+<code>list()</code>, and updating arguments as when simulating from a
+fitted <code>tergm</code>.</p></li>
+<li><p>Combine the <code>stats.form</code> and <code>stats.diss</code>
+arguments (if passed) into a single <code>stats</code>
+argument.</p></li>
+<li><p>Pass <code>dynamic = TRUE</code> to indicate that you want
+dynamic <code>tergm</code> simulation.</p></li>
 </ul>
 <p>Thus, we obtain the 4.0 simulation call</p>
 <pre><code>tergm.sim.2 &lt;- simulate(flobusiness ~ Form(~edges+gwesp(0,fixed=T)) +

@@ -61,6 +61,34 @@
   % }
 %% }
 
+\section{Changes in version 4.1.1}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{networkDynamic} now handles dimnames more consistently.
+    }
+  }
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item Documentation improvements.
+
+      \item Terms \code{\link[=edgecov.mean.age-ergmTerm]{edgecov.mean.age}()} and \code{\link[=edgecov.ages-ergmTerm]{edgecov.ages}()} now handle their arguments more consistently with \code{\link[ergm:edgecov-ergmTerm]{edgecov}()} and stop with error if the network does not have the specified attribute.
+    }
+  }
+
+  \subsection{DEPRECATED & DEFUNCT}{
+    \itemize{
+      \item \code{stergm()} and related facilities have been deprecated.
+
+      \item Some vestigial files have been removed.
+
+      \item Workaround storing \code{ergm::simulate_formula()} is no longer needed.
+    }
+  }
+}
+
+
+
 \section{Changes in version 4.1.0}{
   \subsection{NEW FEATURES}{
     \itemize{
