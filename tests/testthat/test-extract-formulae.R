@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2022 Statnet Commons
+#  Copyright 2008-2023 Statnet Commons
 ################################################################################
 
 test_that(".extract.fd.formulae behaves reasonably", {
@@ -341,7 +341,7 @@ test_that("terms .P/.M behave as plus/minus identity", {
   expect_equal(s1, -s3)
   
   ## non-durational, curved
-  ff1 <- ~edges + triangle + gwesp(0, fixed = TRUE) + gwesp(fixed = FALSE, cutoff = 5)
+  ff1 <- ~edges + triangle + gwesp(0, fixed = TRUE) + gwesp(fixed = FALSE, cutoff = 100)
   s1 <- summary(ff1, basis = nw)
   s2 <- summary(~.P(ff1), basis = nw)
   s3 <- summary(~.M(ff1), basis = nw)
@@ -370,7 +370,7 @@ test_that("terms .P/.M behave as plus/minus identity", {
   expect_equal(s1, -s3)
   
   ## durational, curved
-  ff3 <- ~edges + triangle + gwesp(0, fixed = TRUE) + gwesp(fixed = FALSE, cutoff = 5) + mean.age + Form(~edges + triangle + mean.age) + Diss(~gwesp(fixed = FALSE, cutoff = 5))
+  ff3 <- ~edges + triangle + gwesp(0, fixed = TRUE) + gwesp(fixed = FALSE, cutoff = 100) + mean.age + Form(~edges + triangle + mean.age) + Diss(~gwesp(fixed = FALSE, cutoff = 100))
   s1 <- summary(ff3, basis = nw)
   s2 <- summary(~.P(ff3), basis = nw)
   s3 <- summary(~.M(ff3), basis = nw)

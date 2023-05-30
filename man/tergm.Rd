@@ -16,7 +16,8 @@ tergm(
   eval.loglik = NVL(getOption("tergm.eval.loglik"), getOption("ergm.eval.loglik")),
   control = control.tergm(),
   verbose = FALSE,
-  ...
+  ...,
+  basis = eval_lhs.formula(formula)
 )
 }
 \arguments{
@@ -26,7 +27,7 @@ tergm(
 on the support of the distribution of the networks being modeled. Multiple constraints
 may be given, separated by \dQuote{+} and \dQuote{-} operators. See
 \code{\link{ergmConstraint}} for the detailed explanation of
-their semantics and also for an indexed list of the constraints visible to the \CRANpkg{ergm} package.
+their semantics and also for an indexed list of the constraints visible to the \pkg{ergm} package.
 
 The default is to have no constraints except those provided through
 the \code{\link{ergmlhs}} API.
@@ -98,6 +99,8 @@ detail. Note that very high values (5+) may significantly slow
 down processing.}
 
 \item{\dots}{Additional arguments, to be passed to lower-level functions.}
+
+\item{basis}{optional network data overriding the left hand side of \code{formula}}
 }
 \value{
 \code{\link{tergm}} returns an object of class \code{tergm} that
@@ -109,14 +112,6 @@ it. Note that \code{\link[=gof]{gof()}} only works for the CMLE method.
 \code{\link{tergm}} is used for finding Temporal ERGMs' (TERGMs) and Separable Temporal ERGMs' (STERGMs)
 Conditional MLE (CMLE) (Krivitsky and Handcock, 2010) and Equilibrium
 Generalized Method of Moments Estimator (EGMME) (Krivitsky, 2009).
-}
-\details{
-\strong{Model Terms} See \code{\link{ergm}} and \code{\link{ergm-terms}} for
-details. At this time, only linear ERGM terms are allowed.  \itemize{
-\item For a brief demonstration, please see the tergm package vignette:
-\code{browseVignettes(package='tergm')} \item A more detailed tutorial is
-available on the statnet wiki:
-\url{https://statnet.org/Workshops/tergm/tergm_tutorial.html} }
 }
 \examples{
 \dontrun{
@@ -187,5 +182,9 @@ University Department of Statistics Technical Report}, 2012(2012-01).
 \url{http://stat.psu.edu/research/technical-report-files/2012-technical-reports/modeling-of-dynamic-networks-based-on-egocentric-data-with-durational-information}
 }
 \seealso{
-\code{\link[=ergm]{ergm()}}, \code{\link[=network]{network()}}, \code{\link{\%v\%}}, \code{\link{\%n\%}}, \code{\link{ergm-terms}}
+\code{\link{network}} and \code{\link[=NetSeries]{NetSeries()}} for the data structures,
+\code{\link[=ergm]{ergm()}} and \code{\link{ergmTerm}} for model specification,
+package vignette \code{browseVignettes(package='tergm')} for a
+short demonstration, the Statnet web site
+\url{https://statnet.org/workshop-tergm/} for a tutorial
 }

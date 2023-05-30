@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2022 Statnet Commons
+#  Copyright 2008-2023 Statnet Commons
 ################################################################################
 ################################################################################
 # tergm --- fit Separable Temporal ERGMs.
@@ -18,13 +18,6 @@
 #' \code{\link{tergm}} is used for finding Temporal ERGMs' (TERGMs) and Separable Temporal ERGMs' (STERGMs)
 #' Conditional MLE (CMLE) (Krivitsky and Handcock, 2010) and Equilibrium
 #' Generalized Method of Moments Estimator (EGMME) (Krivitsky, 2009).
-#' 
-#' \strong{Model Terms} See \code{\link{ergm}} and \code{\link{ergm-terms}} for
-#' details. At this time, only linear ERGM terms are allowed.  \itemize{
-#' \item For a brief demonstration, please see the tergm package vignette:
-#' \code{browseVignettes(package='tergm')} \item A more detailed tutorial is
-#' available on the statnet wiki:
-#' \url{https://statnet.org/Workshops/tergm/tergm_tutorial.html} }
 #' 
 #' @param formula an ERGM formula.
 #'
@@ -70,13 +63,19 @@
 #' Constructed using \code{\link{control.tergm}}.
 #' @template verbose
 #' @param \dots Additional arguments, to be passed to lower-level functions.
+#' @param basis optional network data overriding the left hand side of \code{formula}
 #'
 #' @return \code{\link{tergm}} returns an object of class `tergm` that
 #'   inherits from `ergm` and has the usual methods ([coef.ergm()],
 #'   [summary.ergm()], [mcmc.diagnostics()], etc.) implemented for
 #'   it. Note that [gof()] only works for the CMLE method.
 #'
-#' @seealso [ergm()], [network()], [`%v%`], [`%n%`], \code{\link{ergm-terms}}
+#' @seealso [`network`] and [NetSeries()] for the data structures,
+#'   [ergm()] and \code{\link{ergmTerm}} for model specification,
+#'   package vignette \code{browseVignettes(package='tergm')} for a
+#'   short demonstration, the Statnet web site
+#'   \url{https://statnet.org/workshop-tergm/} for a tutorial
+
 #' @references
 #'
 #' Krackhardt, D and Handcock, MS (2006) Heider vs Simmel: Emergent
@@ -154,7 +153,7 @@ tergm <- function(formula, constraints = ~., estimate, times=NULL, offset.coef=N
                    targets=NULL, target.stats=NULL, SAN.offsets = NULL,
                    eval.loglik=NVL(getOption("tergm.eval.loglik"), getOption("ergm.eval.loglik")),
                    control=control.tergm(),
-                   verbose=FALSE, ...) {
+                   verbose=FALSE, ..., basis = eval_lhs.formula(formula)) {
   check.control.class("tergm", "tergm")
 
   tergm_call <- match.call(ergm)
@@ -167,11 +166,11 @@ tergm <- function(formula, constraints = ~., estimate, times=NULL, offset.coef=N
     stop("Argument formula must be a formula.")
   
   out <- switch(estimate,
-                CMLE=tergm.CMLE(formula=formula, times=times, constraints=constraints, estimate="MLE", offset.coef=offset.coef, target.stats=target.stats, eval.loglik=eval.loglik,control=control, verbose=verbose, ...),
-                CMPLE=tergm.CMLE(formula=formula, times=times, constraints=constraints, estimate="MPLE", offset.coef=offset.coef, target.stats=target.stats, eval.loglik=eval.loglik,control=control, verbose=verbose, ...),
+                CMLE=tergm.CMLE(formula=formula, times=times, constraints=constraints, estimate="MLE", offset.coef=offset.coef, target.stats=target.stats, eval.loglik=eval.loglik,control=control, verbose=verbose, ..., basis = basis),
+                CMPLE=tergm.CMLE(formula=formula, times=times, constraints=constraints, estimate="MPLE", offset.coef=offset.coef, target.stats=target.stats, eval.loglik=eval.loglik,control=control, verbose=verbose, ..., basis = basis),
                 EGMME=tergm.EGMME(formula, constraints,
                   offset.coef,
-                  targets, target.stats, SAN.offsets, estimate, control, verbose)
+                  targets, target.stats, SAN.offsets, estimate, control, verbose, basis = basis)
                 )
 
   out$call <- tergm_call

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2022 Statnet Commons
+#  Copyright 2008-2023 Statnet Commons
 ################################################################################
 
 test_that("term Change behaves reasonably in dynamic contexts", {
@@ -46,7 +46,7 @@ test_that("term Change behaves reasonably in dynamic contexts", {
   expect_equal(s1, s3[1,])
 
   ## non-durational, curved
-  ff1 <- ~edges + triangle + gwesp(0, fixed = TRUE) + gwesp(fixed = FALSE, cutoff = 5) + isolates
+  ff1 <- ~edges + triangle + gwesp(0, fixed = TRUE) + gwesp(fixed = FALSE, cutoff = 100) + isolates
   s1 <- summary(ff1, basis = nwdiff)
   s2 <- summary(~Change(ff1), basis = nw)
   names(s1) <- paste0("Change~", names(s1))
@@ -78,7 +78,7 @@ test_that("term Change behaves reasonably in dynamic contexts", {
   expect_equal(s1, s3[1,])
 
   ## durational, curved
-  ff3 <- ~edges + triangle + gwesp(0, fixed = TRUE) + isolates + gwesp(fixed = FALSE, cutoff = 5) + mean.age + Form(~edges + triangle + mean.age) + Diss(~gwesp(fixed = FALSE, cutoff = 5))
+  ff3 <- ~edges + triangle + gwesp(0, fixed = TRUE) + isolates + gwesp(fixed = FALSE, cutoff = 100) + mean.age + Form(~edges + triangle + mean.age) + Diss(~gwesp(fixed = FALSE, cutoff = 100))
   s1 <- summary(ff3, basis = nwdiff)
   s2 <- summary(~Change(ff3), basis = nw)
   names(s1) <- paste0("Change~", names(s1))

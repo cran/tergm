@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2022 Statnet Commons
+#  Copyright 2008-2023 Statnet Commons
 ################################################################################
 
 .same_constraints <- function(nwl, nattr){
@@ -18,13 +18,13 @@ join_nets <- function(nwl, blockID, blockName){
 
   nw <- combine_networks(nwl, blockID.vattr=blockID, blockName.vattr=blockName, ignore.nattr = c(eval(formals(combine_networks)$ignore.nattr), "constraints", "obs.constraints", "ergm"), subnet.cache=TRUE)
 
-  nw %n% "ergm" <- .combine_ergmlhs(nwl)
+  nw %n% "ergm" <- combine_ergmlhs(nwl)
 
   nw %ergmlhs% "constraints" <-
       if(NVL(nwl[[1]] %ergmlhs% "constraints",base_env(~.))==base_env(~.))
         base_env(substitute(~blockdiag(blockID), list(blockID=blockID)))
       else
-        append_rhs.formula(nwl[[1]]%ergmlhs%"constraints", list(call("blockdiag",".NetworkID")), TRUE)
+        append_rhs.formula(nwl[[1]]%ergmlhs%"constraints", list(call("blockdiag",".TimeID")), TRUE)
   if(!is.null(nwl[[1]]%ergmlhs%"obs.constraints")) nw %ergmlhs% "obs.constraints" <- nwl[[1]]%ergmlhs%"obs.constraints"
 
   nw
@@ -112,6 +112,9 @@ NetSeries <- function(..., order=1, NA.impute=NULL){
 
   nwl <- lapply(seq_along(nwl)[-1], function(t){
     nwl[[t]] %n% ".PrevNets" <- list(nwl0[[t-1]])
+    nwl[[t]] %n% ".TimeID" <- t
+    nwl[[t]] %n% ".Time" <- times[t]
+    nwl[[t]] %n% ".TimeDelta" <- times[t] - times[t-1]
     nwl[[t]]
   })
 
@@ -122,35 +125,42 @@ NetSeries <- function(..., order=1, NA.impute=NULL){
   }
   
   # Now, just combine them using the Networks() constructor.
-  nw <- join_nets(nwl,".NetworkID",".NetworkName")
+  nw <- join_nets(nwl,".TimeID",".Time")
   # Add previous networks combined.
-  .PrevNet <- join_nets(nwl0,".NetworkID",".NetworkName")
-  nw %ergmlhs% "constraints" <- nonsimp_update.formula(nw%ergmlhs%"constraints", .~.+discord(.PrevNet), from.new=".PrevNet")
+  nw %n% ".PrevNet" <- join_nets(nwl0,".TimeID",".Time")
+  nw %ergmlhs% "constraints" <- nonsimp_update.formula(nw%ergmlhs%"constraints", .~.+discord(".PrevNet"))
 
   structure(nw, class = c("tergm_NetSeries", class(nw)))
 }
 
-
-InitErgmTerm.Form <- function(nw, arglist,  ..., env=baseenv()) {
+.call_N <- function(term, nw, arglist, ..., env=baseenv()){
   a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("formula"),
-                      vartypes = c("formula"),
-                      defaultvalues = list(NULL),
-                      required = c(TRUE))
-
-  if(!is(nw, "tergm_NetSeries")) {
-    return(`InitErgmTerm.Form (dynamic)`(nw = nw, arglist = a["formula"], ...))
-  }
+                      varnames = c("formula", "lm", "subset", "weights", "contrasts", "offset", "label"),
+                      vartypes = c("formula", "formula", "formula,logical,numeric,expression,call", "formula,logical,numeric,expression,call", "list", "formula,logical,numeric,expression,call", "character"),
+                      defaultvalues = list(NULL, ~1, TRUE, 1, NULL, NULL, NULL),
+                      required = c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))
 
   f <- a$formula
-  ult(f) <- call("Form1",as.formula(call("~",ult(f)), env=env)) # e.g., a~b -> a~Form1(~b)
+  ult(f) <- call(paste0(term,"1"), as.formula(call("~",ult(f)), env=env)) # e.g., a~b -> a~term1(~b)
   environment(f) <- environment(a$formula)
   a$formula <- f
 
-  # Just call Cross() operator.
-  term <- as.call(c(list(as.name("Cross")), c(a, label=FALSE)))
-  out <- call.ErgmTerm(term, env=env, nw=nw, ...)
-  out
+  # Just call N() operator.
+  call.ErgmTerm(as.call(c(list(as.name("N")),
+                    c(a[c("formula", "lm", "subset", "weights", "contrasts", "offset")],
+                      label=ergm_mk_std_op_namewrap(term,a$label),
+                      .NetworkID=".TimeID", .NetworkName=".Time")
+                    )),
+                env=env, nw=nw, ...)
+}
+
+#' @templateVar name Form
+#' @template ergmTerm-rdname
+#' @usage NULL
+#' @template ergmTerm-N-arguments
+InitErgmTerm.Form <- function(nw, arglist,  ...){
+  if(!is(nw, "tergm_NetSeries")) `InitErgmTerm.Form (dynamic)`(nw = nw, arglist = arglist, ...)
+  else .call_N("Form", nw, arglist, ...)
 }
 
 #' @importFrom utils modifyList
@@ -168,31 +178,18 @@ InitErgmTerm.Form1 <- function(nw, arglist,  ...){
   c(list(name="on_union_net_Network", pkgname="ergm",
          auxiliaries = ~.union.net((nw%n%".PrevNets")[[1]], implementation="Network"),
          submodel = m),
-    modifyList(wrap.ergm_model(m, nw, ergm_mk_std_op_namewrap("Form")),
+    modifyList(wrap.ergm_model(m, nw, identity),
                list(emptynwstats=summary(m, (nw%n%".PrevNets")[[1]])))
     )
 }
 
-InitErgmTerm.Persist <- function(nw, arglist,  ..., env=baseenv()) {
-  a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("formula"),
-                      vartypes = c("formula"),
-                      defaultvalues = list(NULL),
-                      required = c(TRUE))
-
-  if(!is(nw, "tergm_NetSeries")) {
-    return(`InitErgmTerm.Persist (dynamic)`(nw = nw, arglist = a["formula"], ...))
-  }
-
-  f <- a$formula
-  ult(f) <- call("Persist1",as.formula(call("~",ult(f)), env=env)) # e.g., a~b -> a~Form1(~b)
-  environment(f) <- environment(a$formula)
-  a$formula <- f
-
-  # Just call Cross() operator.
-  term <- as.call(c(list(as.name("Cross")), c(a, label=FALSE)))
-  out <- call.ErgmTerm(term, env=env, nw=nw, ...)
-  out
+#' @templateVar name Persist
+#' @template ergmTerm-rdname
+#' @usage NULL
+#' @template ergmTerm-N-arguments
+InitErgmTerm.Persist <- function(nw, arglist,  ...) {
+  if(!is(nw, "tergm_NetSeries")) `InitErgmTerm.Persist (dynamic)`(nw = nw, arglist = arglist,...)
+  else .call_N("Persist", nw, arglist, ...)
 }
 
 # One dissolution transition
@@ -209,51 +206,41 @@ InitErgmTerm.Persist1 <- function(nw, arglist,  ...){
   c(list(name="on_intersect_net_Network", pkgname="ergm",
          auxiliaries = ~.intersect.net((nw%n%".PrevNets")[[1]], implementation="Network"),
          submodel = m),
-    wrap.ergm_model(m, nw, ergm_mk_std_op_namewrap("Persist")))
+    wrap.ergm_model(m, nw, identity))
 }
 
+#' @templateVar name Diss
+#' @template ergmTerm-rdname
+#' @usage NULL
+#' @template ergmTerm-N-arguments
 InitErgmTerm.Diss <- function(nw, arglist,  ..., env=baseenv()) {
+  if(!is(nw, "tergm_NetSeries")) `InitErgmTerm.Diss (dynamic)`(nw = nw, arglist = arglist, ...)
+  else{
+    .call_N("Diss", nw, arglist, ...)
+  }
+}
+
+#
+InitErgmTerm.Diss1 <- function(nw, arglist,  ..., env){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formula"),
                       vartypes = c("formula"),
                       defaultvalues = list(NULL),
                       required = c(TRUE))
-
-  if(!is(nw, "tergm_NetSeries")) {
-    return(`InitErgmTerm.Diss (dynamic)`(nw = nw, arglist = a["formula"], ...))
-  }
-  
-  renamer <- function(x) I(sub("^Persist~", "Diss~", x))
   formula <- a$formula
   formula[2:3] <- c(-1, formula[[2]])
-
-  term <- call("Persist", substitute(~Sum(formula, I), list(formula=formula)))
-  out <- call.ErgmTerm(term, env=env, nw=nw, ...)
-  out$coef.names <- renamer(out$coef.names)
-  if(!is.null(out$params)) names(out$params) <- renamer(names(out$params))
-  out
+  term <- call("Persist1", substitute(~Sum(formula, I), list(formula=formula)))
+  ergm_model(term_list(list(term), env=env), nw, ..., env=env, terms.only=TRUE)
 }
 
-InitErgmTerm.Change <- function(nw, arglist,  ..., env=baseenv()) {
-  a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("formula"),
-                      vartypes = c("formula"),
-                      defaultvalues = list(NULL),
-                      required = c(TRUE))
 
-  if(!is(nw, "tergm_NetSeries")) {
-    return(`InitErgmTerm.Change (dynamic)`(nw = nw, arglist = a["formula"], ...))
-  }
-
-  f <- a$formula
-  ult(f) <- call("Change1",as.formula(call("~",ult(f)), env=env)) # e.g., a~b -> a~Form1(~b)
-  environment(f) <- environment(a$formula)
-  a$formula <- f
-
-  # Just call Cross() operator.
-  term <- as.call(c(list(as.name("Cross")), c(a, label=FALSE)))
-  out <- call.ErgmTerm(term, env=env, nw=nw, ...)
-  out
+#' @templateVar name Change
+#' @template ergmTerm-rdname
+#' @usage NULL
+#' @template ergmTerm-N-arguments
+InitErgmTerm.Change <- function(nw, arglist,  ...) {
+  if(!is(nw, "tergm_NetSeries")) `InitErgmTerm.Change (dynamic)`(nw = nw, arglist = arglist, ...)
+  else .call_N("Change", nw, arglist, ...)
 }
 
 # One difference transition
@@ -270,20 +257,9 @@ InitErgmTerm.Change1 <- function(nw, arglist,  ...){
   c(list(name="on_discord_net_Network", pkgname="ergm",
          auxiliaries = ~.discord.net((nw%n%".PrevNets")[[1]], implementation="Network"),
          submodel = m),
-    modifyList(wrap.ergm_model(m, nw, ergm_mk_std_op_namewrap("Change")),
+    modifyList(wrap.ergm_model(m, nw, identity),
                list(emptynwstats=summary(m, (nw%n%".PrevNets")[[1]])))
     )
-}
-
-# Auxiliary to extract crossectional networks.
-InitErgmTerm..crossnets <- function(nw, arglist, ...){
-  a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("attrname"),
-                      vartypes = c("character"),
-                      defaultvalues = list(NULL),
-                      required = c(TRUE))
-
-  list(name="_crossnets", coef.names=c(), iinputs=c(unlist(.block_vertexmap(nw, a$attrname))), dependence=FALSE)
 }
 
 # A term for a cross-sectional model for the network in a series.
@@ -297,61 +273,36 @@ InitErgmTerm..crossnets <- function(nw, arglist, ...){
 #'   `Cross(~TERM) == ~TERM` ) for EGMME and dynamic simulation.
 #'
 #' @usage
-#' # binary: Cross(formula)
+#' # binary: Cross(
+#' #           formula,
+#' #           lm = ~1,
+#' #           subset = TRUE,
+#' #           weights = 1,
+#' #           contrasts = NULL,
+#' #           offset = 0,
+#' #           label = NULL
+#' #         )
 #' @template ergmTerm-formula
+#' @template ergmTerm-N-arguments
 #'
 #' @template ergmTerm-general
 #' @import purrr
+#' @rawNamespace import(ergm.multi, except=c("snctrl"))
 #'
 #' @concept operator
 #' @concept durational
 InitErgmTerm.Cross <- function(nw, arglist, ..., env=baseenv()) {
+  if (!is(nw, "tergm_NetSeries")) `InitErgmTerm.Cross (dynamic)`(nw = nw, arglist = arglist, ...)
+  else .call_N("Cross", nw, arglist, ..., env=env)
+}
+
+# Pass through
+InitErgmTerm.Cross1 <- function(nw, arglist,  ...){
   a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("formula", "label"),
-                      vartypes = c("formula", "logical"),
-                      defaultvalues = list(NULL, TRUE),
-                      required = c(TRUE, FALSE))
-  namewrap <- if(a$label) ergm_mk_std_op_namewrap("Cross") else identity
+                      varnames = c("formula"),
+                      vartypes = c("formula"),
+                      defaultvalues = list(NULL),
+                      required = c(TRUE))
 
-  if (!is(nw, "tergm_NetSeries")) {
-    # Just call Passthrough() operator.
-    term <- as.call(c(list(as.name("Passthrough")), list(formula = a$formula, label=FALSE)))
-    term <- call.ErgmTerm(term, env = env, nw = nw, ...)
-    term$duration <- is.durational(term$submodel)
-
-    term$coef.names <- namewrap(term$coef.names)
-    if(!is.null(term$params)) names(term$params) <- namewrap(names(term$params))
-
-    return(term)
-  }
-
-  auxiliaries <- base_env(~.crossnets(".NetworkID"))
-
-  nwl <- .split_constr_network(nw, ".NetworkID", ".NetworkName")
-  nwnames <- names(nwl)
-  nn <- length(nwl)
-
-  ms <- lapply(nwl, function(nw1){
-    ergm_model(a$formula, nw1, ..., offset.decorate=FALSE)
-  })
-  lapply(ms, ergm_no_ext.encode)
-
-  nparams <- ms %>% map_int(nparam, canonical=FALSE)
-  nstats <-  ms %>% map_int(nparam, canonical=TRUE)
-
-  if(!all_identical(nparams) && !all_identical(ms %>% map(param_names, canonical=FALSE))) ergm_Init_abort("The transitions appear to have different sets of parameters. This may be a consequence of a change in network composition. The levels= argument may help.")
-  nparam <- nparams[1]
-
-  wms <- mapply(wrap.ergm_model, ms, nwl, MoreArgs=list(namewrap = namewrap), SIMPLIFY=FALSE, USE.NAMES=FALSE)
-
-  gss <- map(wms, "emptynwstats")
-  gs <-
-    if(all(map_lgl(gss, is.null))){ # Linear combination of 0s is 0.
-      NULL
-    }else{ # All numeric or NULL
-      gss %>% map(NVL, 0) %>% Reduce(`+`, .)
-    }
-
-  c(list(name="OnCrossNets", submodels=ms, emptynwstats = gs, auxiliaries = auxiliaries),
-    wms[[1]][c("coef.names","map","gradient","params","dependence","offset")])
+  ergm_model(a$formula, nw, ...)
 }

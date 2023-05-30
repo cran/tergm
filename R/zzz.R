@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2022 Statnet Commons
+#  Copyright 2008-2023 Statnet Commons
 ################################################################################
 #' @import statnet.common
 .onAttach <- function(libname, pkgname){
@@ -13,7 +13,7 @@
   if(!is.null(sm)) packageStartupMessage(sm)
 }
 
-#' @import ergm
+#' @rawNamespace import(ergm, except=c("snctrl"))
 .onLoad <- function(libname, pkgname){
   # . is used as a placeholder by stantet.common::NVL3().
   utils::globalVariables(".")

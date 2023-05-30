@@ -5,14 +5,14 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2022 Statnet Commons
+#  Copyright 2008-2023 Statnet Commons
 ################################################################################
 
 tergm.EGMME <- function(formula, constraints, offset.coef,
                    targets, target.stats, SAN.offsets, estimate,
                  control,
-                 verbose) {
-  nw <- eval_lhs.formula(formula)
+                 verbose, basis) {
+  nw <- basis
 
   if(!is.network(nw)) stop("Argument nw must be a network.")
 

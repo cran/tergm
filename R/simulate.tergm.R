@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2008-2022 Statnet Commons
+#  Copyright 2008-2023 Statnet Commons
 ################################################################################
 
 #' Draw from the distribution of a Temporal Exponential Family
@@ -246,21 +246,22 @@ simulate.tergm<-function(object, nsim=1, seed=NULL,
   if(is.null(nw.start)){
     if(is(object, "tergm_CMLE")) stop('Simulating from TERGM CMLE fit requires the starting network to be specified in the nw.start argument: "first", "last", a numeric index of the network in the series (with "first"==1), or a network (NOT networkDynamic at this time).')
     nw.start <- nw
-  }else if(is.numeric(nw.start)){
-    nwl <- uncombine_network(nw)
-    if(nw.start == 1) nw.start <- (nwl[[1]] %n% ".PrevNets")[[1]]
-    else nw.start <- nwl[[nw.start - 1]]
-    if(!is.network(nw.start)) stop("Invalid starting network specification.")
-  }else if(is.character(nw.start)){
-    nwl <- uncombine_network(nw)
-    nw.start <- switch(nw.start,
-                       first = (nwl[[1]] %n% ".PrevNets")[[1]],
-                       last = nwl[[length(nwl)]],
-                       stop("Invalid starting network specification."))
-    if(!is.network(nw.start)) stop("Invalid starting network specification.")                   
   }else if(is.networkDynamic(nw.start)){
     stop("Using a networkDynamic to start a simulation from a TERGM is not supported at this time.")
+  }else if(is.numeric(nw.start) || is.character(nw.start)){
+    nw.t <- length((nw %n% ".subnetattr")$.TimeID$n) + 1L
+    if(is.character(nw.start))
+      nw.start <- switch(nw.start,
+                         first = 1L,
+                         last = nw.t,
+                         stop("Invalid starting network specification."))
+
+    nw.start <- if(nw.start < nw.t) (nw%n%".subnetattr")$.TimeID$.PrevNets[[nw.start]][[1]]
+      else if(nw.start == nw.t) uncombine_network(nw,use.subnet.cache=FALSE)[[nw.t-1]]
+      else stop("Invalid starting network specification: starting index exceeds the length of the network series.")
   }
+
+  if(!is.network(nw.start)) stop("Invalid starting network specification.")
 
   simulate_formula.network(object=object$formula, basis=nw.start,nsim=nsim,coef=coef, constraints=constraints, monitor=monitor, time.start=time.start, time.slices=time.slices, time.burnin=time.burnin, time.interval=time.interval,control=control, output=match.arg(output), stats=stats, verbose=verbose, dynamic=TRUE, ...)
 }
@@ -285,6 +286,7 @@ simulate_formula.network <- function(object, nsim=1, seed=NULL,
 
     mc <- match.call()
     mc[[1]] <- ergm::.simulate_formula.network
+    mc$dynamic <- NULL
     return(eval.parent(mc))
   }
 
@@ -484,6 +486,7 @@ simulate_formula.networkDynamic <- function(object, nsim=1, seed=NULL,
 
     mc <- match.call()
     mc[[1]] <- ergm::.simulate_formula.network
+    mc$dynamic <- NULL
     return(eval.parent(mc))
   }
 
