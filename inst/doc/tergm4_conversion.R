@@ -1,4 +1,4 @@
-## ---- echo=FALSE, cache=FALSE, eval=TRUE--------------------------------------
+## ----echo=FALSE, cache=FALSE, eval=TRUE---------------------------------------
 library(knitr)
 library(rmarkdown)
 options(rmarkdown.html_vignette.check_title = FALSE)
